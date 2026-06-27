@@ -809,6 +809,24 @@
       background: rgba(183, 75, 65, 0.08);
     }
 
+    .broj-done-row td {
+      background: rgba(47, 101, 74, 0.045);
+      color: var(--muted);
+    }
+
+    .broj-copy-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 270px;
+    }
+
+    .broj-copy-actions button {
+      min-height: 30px;
+      padding: 0 9px;
+      font-size: 12px;
+    }
+
     .conflict-detail {
       color: var(--red);
       font-size: 12px;
@@ -1077,6 +1095,8 @@
         messageTone: "warm",
         memberSearch: "",
         includePendingBroj: false,
+        hideDoneBroj: false,
+        brojDone: {},
         chatMemberId: "m_example_flexible_evening",
         chatMode: "confirm",
         chatCandidateText: "",
@@ -1092,6 +1112,7 @@
       const next = Object.assign(fallback, parsed);
       next.members = Array.isArray(parsed.members) && parsed.members.length ? parsed.members : fallback.members;
       next.reviews = parsed.reviews && typeof parsed.reviews === "object" ? parsed.reviews : {};
+      next.brojDone = parsed.brojDone && typeof parsed.brojDone === "object" ? parsed.brojDone : {};
       next.members.forEach((member) => {
         if (!member.duration || member.duration === 50) member.duration = 80;
         if (member.groupId == null) member.groupId = "";
@@ -2365,18 +2386,59 @@
       `;
     }
 
+    function brojRowKey(row) {
+      return [row.memberId || row.name, row.dateISO || "no-date", row.time || "no-time"].join("|");
+    }
+
+    function getBrojDoneMap() {
+      if (!state.brojDone) state.brojDone = {};
+      if (!state.brojDone[state.weekStart]) state.brojDone[state.weekStart] = {};
+      return state.brojDone[state.weekStart];
+    }
+
+    function isBrojDone(row) {
+      return Boolean(getBrojDoneMap()[brojRowKey(row)]);
+    }
+
+    function setBrojDone(key, checked) {
+      const doneMap = getBrojDoneMap();
+      if (checked) doneMap[key] = true;
+      else delete doneMap[key];
+      saveState();
+      renderBroj();
+    }
+
+    function brojLessonName(row) {
+      return row.note && /1:1|대표|PT/.test(row.note) ? row.note : "1:1 PT";
+    }
+
+    function brojCopyLine(row) {
+      return [
+        `고객: ${row.name}`,
+        `일정명: ${brojLessonName(row)}`,
+        `날짜: ${row.dateISO}`,
+        `시작: ${row.time}`,
+        `종료: ${row.endTime || ""}`
+      ].join("\n");
+    }
+
     function renderBroj() {
-      const rows = getBrojRows();
+      const rows = getBrojRows().map((row) => Object.assign(row, { done: isBrojDone(row), key: brojRowKey(row) }));
+      const visibleRows = state.hideDoneBroj ? rows.filter((row) => !row.done) : rows;
       document.getElementById("tab-broj").innerHTML = `
         <div class="panel-head">
           <div>
             <h2>브로제이 등록 리스트</h2>
-            <p class="subtle">확정/변경반영 상태만 기본 표시됩니다.</p>
+            <p class="subtle">브로제이 일정 추가 창에 넣을 값을 한 건씩 복사합니다.</p>
           </div>
           <div class="panel-actions">
             <label class="inline-check">
               <input id="includePendingBroj" type="checkbox" ${state.includePendingBroj ? "checked" : ""}>
               확인 필요 포함
+            </label>
+            <label class="inline-check">
+              <input id="hideDoneBroj" type="checkbox" ${state.hideDoneBroj ? "checked" : ""}>
+              미등록만
             </label>
             <button id="copyBrojRows">표 복사</button>
             <button id="exportBrojCsv">브로제이 CSV</button>
@@ -2395,10 +2457,12 @@
                 <th>사용구간</th>
                 <th>겹침</th>
                 <th>메모</th>
+                <th>브로제이 입력</th>
+                <th>완료</th>
               </tr>
             </thead>
             <tbody>
-              ${rows.length ? rows.map(renderBrojRow).join("") : `<tr><td colspan="9" class="empty">브로제이에 등록할 확정 일정이 없습니다.</td></tr>`}
+              ${visibleRows.length ? visibleRows.map(renderBrojRow).join("") : `<tr><td colspan="11" class="empty">브로제이에 등록할 일정이 없습니다.</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -2409,7 +2473,7 @@
       const statusLabel = row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]);
       const statusClass = row.conflict ? "cancel" : row.status;
       return `
-        <tr class="${row.conflict ? "conflict-row" : ""}">
+        <tr class="${row.conflict ? "conflict-row" : ""} ${row.done ? "broj-done-row" : ""}">
           <td><span class="status-chip ${statusClass}">${escapeHtml(statusLabel)}</span></td>
           <td><strong>${escapeHtml(row.name)}</strong></td>
           <td class="mono">${escapeHtml(row.dateLabel)}</td>
@@ -2419,6 +2483,22 @@
           <td>${escapeHtml(row.timeRange || "")}</td>
           <td>${row.conflict ? `<div class="conflict-detail">${escapeHtml(row.conflictNote)}</div>` : row.conflictIgnored ? `<span class="status-chip adjusted">경고 숨김</span>` : ""}</td>
           <td>${escapeHtml(row.note || "")}</td>
+          <td>
+            <div class="broj-copy-actions">
+              <button data-action="copy-broj-value" data-value="${escapeHtml(row.name)}">고객</button>
+              <button data-action="copy-broj-value" data-value="${escapeHtml(brojLessonName(row))}">일정명</button>
+              <button data-action="copy-broj-value" data-value="${escapeHtml(row.dateISO || "")}">날짜</button>
+              <button data-action="copy-broj-value" data-value="${escapeHtml(row.time || "")}">시작</button>
+              <button data-action="copy-broj-value" data-value="${escapeHtml(row.endTime || "")}">종료</button>
+              <button data-action="copy-broj-value" data-value="${escapeHtml(brojCopyLine(row))}">한줄</button>
+            </div>
+          </td>
+          <td>
+            <label class="inline-check">
+              <input type="checkbox" data-broj-done-key="${escapeHtml(row.key)}" ${row.done ? "checked" : ""}>
+              등록
+            </label>
+          </td>
         </tr>
       `;
     }
@@ -2738,10 +2818,12 @@
     }
 
     function exportBrojCsv() {
-      const headers = ["상태", "회원명", "날짜", "요일", "시작", "종료", "확보분", "사용구간", "겹침", "메모"];
+      const headers = ["등록완료", "상태", "회원명", "일정명", "날짜", "요일", "시작", "종료", "확보분", "사용구간", "겹침", "메모"];
       const rows = getBrojRows().map((row) => [
+        isBrojDone(row) ? "Y" : "N",
         row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]),
         row.name,
+        brojLessonName(row),
         row.dateISO,
         row.day,
         row.time,
@@ -2755,10 +2837,12 @@
     }
 
     function copyBrojRows() {
-      const headers = ["상태", "회원명", "날짜", "요일", "시작", "종료", "확보", "사용구간", "겹침", "메모"];
+      const headers = ["등록완료", "상태", "회원명", "일정명", "날짜", "요일", "시작", "종료", "확보", "사용구간", "겹침", "메모"];
       const rows = getBrojRows().map((row) => [
+        isBrojDone(row) ? "Y" : "N",
         row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]),
         row.name,
+        brojLessonName(row),
         row.dateLabel || row.dateISO,
         row.day,
         row.time,
@@ -3103,6 +3187,7 @@
       if (action === "apply-chat-final") applyChatFinal();
       if (action === "reset-duration-override") resetDurationOverride(id, target.dataset.key || "");
       if (action === "remove-candidate-slot") removeCandidateSlot(id, target.dataset.key || "");
+      if (action === "copy-broj-value") copyText(target.dataset.value || "", "브로제이 입력값을 복사했습니다.");
       if (action === "set-status") {
         updateReview(id, "status", target.dataset.status);
         render();
@@ -3228,6 +3313,14 @@
         state.includePendingBroj = target.checked;
         saveState();
         render();
+      }
+      if (target.id === "hideDoneBroj") {
+        state.hideDoneBroj = target.checked;
+        saveState();
+        renderBroj();
+      }
+      if (target.dataset.brojDoneKey) {
+        setBrojDone(target.dataset.brojDoneKey, target.checked);
       }
       if (target.id === "historyWeekSelect") {
         state.historyWeek = target.value || state.weekStart;
