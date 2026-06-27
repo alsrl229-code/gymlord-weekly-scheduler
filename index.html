@@ -347,6 +347,43 @@
       min-width: 220px;
     }
 
+    .member-table {
+      min-width: 1240px;
+    }
+
+    .member-table .member-active-cell {
+      width: 74px;
+      min-width: 74px;
+    }
+
+    .member-table .member-name-cell {
+      width: 180px;
+      min-width: 180px;
+    }
+
+    .member-table .member-type-cell {
+      width: 112px;
+      min-width: 112px;
+    }
+
+    .member-table .member-schedule-cell {
+      min-width: 250px;
+    }
+
+    .member-table .member-group-cell {
+      min-width: 150px;
+    }
+
+    .member-table .member-duration-cell {
+      width: 96px;
+      min-width: 96px;
+    }
+
+    .member-table .member-actions-cell {
+      width: 92px;
+      min-width: 92px;
+    }
+
     .row-actions {
       display: flex;
       gap: 6px;
@@ -826,6 +863,15 @@
 
       .panel-head {
         align-items: flex-start;
+      }
+
+      .member-table {
+        min-width: 1180px;
+      }
+
+      .member-table .member-name-cell {
+        width: 170px;
+        min-width: 170px;
       }
     }
 
@@ -1699,18 +1745,18 @@
           <input id="importMembersInput" class="hidden" type="file" accept=".csv,text/csv">
         </div>
         <div class="table-wrap">
-          <table>
+          <table class="member-table">
             <thead>
               <tr>
-                <th>활성</th>
-                <th>회원명</th>
-                <th>유형</th>
-                <th>고정 일정</th>
-                <th>가능 범위</th>
-                <th>공유그룹</th>
-                <th>확보</th>
-                <th>메모</th>
-                <th>관리</th>
+                <th class="member-active-cell">활성</th>
+                <th class="member-name-cell">회원명</th>
+                <th class="member-type-cell">유형</th>
+                <th class="member-schedule-cell">고정 일정</th>
+                <th class="wide">가능 범위</th>
+                <th class="member-group-cell">공유그룹</th>
+                <th class="member-duration-cell">확보</th>
+                <th class="wide">메모</th>
+                <th class="member-actions-cell">관리</th>
               </tr>
             </thead>
             <tbody>
@@ -1724,33 +1770,33 @@
     function renderMemberRow(member) {
       return `
         <tr>
-          <td class="compact">
+          <td class="compact member-active-cell">
             <input type="checkbox" data-member-id="${member.id}" data-member-field="active" ${member.active ? "checked" : ""}>
           </td>
-          <td>
+          <td class="member-name-cell">
             <input type="text" data-member-id="${member.id}" data-member-field="name" value="${escapeHtml(member.name)}">
           </td>
-          <td>
+          <td class="member-type-cell">
             <select data-member-id="${member.id}" data-member-field="type">
               ${Object.entries(TYPE_LABELS).map(([value, label]) => `<option value="${value}" ${member.type === value ? "selected" : ""}>${label}</option>`).join("")}
             </select>
           </td>
-          <td class="wide">
+          <td class="wide member-schedule-cell">
             <input type="text" data-member-id="${member.id}" data-member-field="fixedText" value="${escapeHtml(member.fixedText || "")}" placeholder="월 19:00, 목 20:00">
           </td>
           <td class="wide">
             <input type="text" data-member-id="${member.id}" data-member-field="availability" value="${escapeHtml(member.availability || "")}" placeholder="월/수 저녁, 토 오전">
           </td>
-          <td>
+          <td class="member-group-cell">
             <input type="text" data-member-id="${member.id}" data-member-field="groupId" value="${escapeHtml(member.groupId || "")}" placeholder="부부/공유" title="같은 이름을 적은 회원끼리 슬롯을 공유해 서로 겹침 검사에서 제외됩니다">
           </td>
-          <td>
+          <td class="member-duration-cell">
             <input type="number" min="60" step="5" data-member-id="${member.id}" data-member-field="duration" value="${escapeHtml(memberDuration(member))}">
           </td>
           <td class="wide">
             <input type="text" data-member-id="${member.id}" data-member-field="note" value="${escapeHtml(member.note || "")}">
           </td>
-          <td>
+          <td class="member-actions-cell">
             <div class="row-actions">
               <button class="icon-only" data-action="duplicate-member" data-id="${member.id}" title="복제">+</button>
               <button class="icon-only danger" data-action="delete-member" data-id="${member.id}" title="삭제">x</button>
