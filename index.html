@@ -636,6 +636,13 @@
       gap: 8px;
     }
 
+    .override-item-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+
     .override-item strong {
       font-size: 13px;
     }
@@ -644,6 +651,23 @@
       color: var(--muted);
       font-size: 12px;
       font-weight: 700;
+    }
+
+    .slot-remove {
+      width: 28px;
+      min-height: 28px;
+      padding: 0;
+      border-radius: 999px;
+      color: var(--red);
+      border-color: #e2bcb8;
+      background: #fff;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .slot-remove:hover {
+      background: rgba(183, 75, 65, 0.08);
+      border-color: rgba(183, 75, 65, 0.42);
     }
 
     .parsed-result {
@@ -977,6 +1001,8 @@
     }, window.GYMLORD_SUPABASE || {});
 
     let activeTab = "members";
+    let memberSearchRenderTimer = null;
+    let memberSearchComposing = false;
     let supabaseClient = null;
     let cloudSaveTimer = null;
     const cloudState = {
@@ -1722,6 +1748,27 @@
       setCloudMessage("로그아웃됨", "signed-out");
     }
 
+    function focusMemberSearch() {
+      const input = document.getElementById("memberSearch");
+      if (!input) return;
+      input.focus({ preventScroll: true });
+      const cursor = input.value.length;
+      try {
+        input.setSelectionRange(cursor, cursor);
+      } catch (error) {
+        // Some mobile browsers do not allow selection control on search inputs.
+      }
+    }
+
+    function scheduleMemberSearchRender(delay = 240) {
+      window.clearTimeout(memberSearchRenderTimer);
+      memberSearchRenderTimer = window.setTimeout(() => {
+        if (memberSearchComposing || activeTab !== "members") return;
+        renderMembers();
+        focusMemberSearch();
+      }, delay);
+    }
+
     function renderMembers() {
       const query = (state.memberSearch || "").trim().toLowerCase();
       const filtered = state.members.filter((member) => !query || member.name.toLowerCase().includes(query));
@@ -2026,7 +2073,10 @@
                 <div class="override-item">
                   <div class="override-item-top">
                     <strong>${escapeHtml(formatKoreanDate(slot.date))} ${escapeHtml(displayTime(slot.time))}</strong>
-                    ${isOverride ? `<span class="status-chip adjusted">예외</span>` : `<small>기본</small>`}
+                    <span class="override-item-meta">
+                      ${isOverride ? `<span class="status-chip adjusted">예외</span>` : `<small>기본</small>`}
+                      <button class="slot-remove" data-action="remove-candidate-slot" data-id="${member.id}" data-key="${escapeHtml(key)}" title="이 일정 제거" aria-label="이 일정 제거">x</button>
+                    </span>
                   </div>
                   <label>
                     확보분
@@ -2917,6 +2967,20 @@
       showToast("이번주 예외 확보분을 기본값으로 되돌렸습니다.");
     }
 
+    function removeCandidateSlot(memberId, key) {
+      const member = state.members.find((item) => item.id === memberId);
+      if (!member) return;
+      const review = getReview(memberId);
+      const sourceText = (state.chatCandidateText || review.finalText || member.fixedText || "").trim();
+      const remaining = parseScheduleText(sourceText).filter((slot) => slotOverrideKey(slot.dateISO, slot.time) !== key);
+      state.chatCandidateText = remaining.map((slot) => `${slot.day} ${slot.time}`).join(", ");
+      if (review.durationOverrides) delete review.durationOverrides[key];
+      if (review.conflictIgnores) delete review.conflictIgnores[key];
+      saveState();
+      render();
+      showToast("일정을 목록에서 제거했습니다. 최종 반영을 누르면 저장됩니다.");
+    }
+
     function setConflictIgnore(memberId, key, checked) {
       const review = getWeekReview();
       if (!review[memberId]) review[memberId] = {};
@@ -3038,6 +3102,7 @@
       }
       if (action === "apply-chat-final") applyChatFinal();
       if (action === "reset-duration-override") resetDurationOverride(id, target.dataset.key || "");
+      if (action === "remove-candidate-slot") removeCandidateSlot(id, target.dataset.key || "");
       if (action === "set-status") {
         updateReview(id, "status", target.dataset.status);
         render();
@@ -3093,7 +3158,8 @@
       if (target.id === "memberSearch") {
         state.memberSearch = target.value;
         saveState();
-        renderMembers();
+        if (event.isComposing || memberSearchComposing) return;
+        scheduleMemberSearchRender();
       }
       if (target.id === "chatCandidateText") {
         state.chatCandidateText = target.value;
@@ -3118,6 +3184,22 @@
       if (target.dataset.reviewId && target.dataset.reviewField) {
         updateReview(target.dataset.reviewId, target.dataset.reviewField, target.value);
       }
+    });
+
+    document.addEventListener("compositionstart", (event) => {
+      const target = event.target;
+      if (target.id !== "memberSearch") return;
+      memberSearchComposing = true;
+      window.clearTimeout(memberSearchRenderTimer);
+    });
+
+    document.addEventListener("compositionend", (event) => {
+      const target = event.target;
+      if (target.id !== "memberSearch") return;
+      memberSearchComposing = false;
+      state.memberSearch = target.value;
+      saveState();
+      scheduleMemberSearchRender(180);
     });
 
     document.addEventListener("change", (event) => {
