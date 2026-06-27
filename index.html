@@ -875,6 +875,79 @@
       white-space: nowrap;
     }
 
+    .broj-mode-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
+      gap: 14px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .broj-mode-title {
+      display: grid;
+      gap: 5px;
+    }
+
+    .broj-mode-title strong {
+      font-size: 17px;
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-auto-flow: column;
+      gap: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 4px;
+      background: #f8faf5;
+    }
+
+    .segmented button {
+      border: 0;
+      min-height: 38px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .segmented button.active {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .broj-readiness-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .broj-readiness-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+    }
+
+    .broj-readiness-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .broj-readiness-card strong {
+      display: block;
+      font-size: 26px;
+      line-height: 1;
+    }
+
     .broj-section-label {
       display: flex;
       align-items: center;
@@ -931,6 +1004,19 @@
     .broj-quick-actions button {
       min-height: 32px;
       padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .broj-search-state {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .broj-search-state button {
+      min-height: 28px;
+      padding: 0 8px;
       font-size: 12px;
     }
 
@@ -1022,6 +1108,14 @@
         grid-template-columns: 1fr;
       }
 
+      .broj-mode-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .broj-readiness-grid {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      }
+
       .broj-queue-actions {
         justify-content: flex-start;
       }
@@ -1042,7 +1136,8 @@
 
     @media (max-width: 480px) {
       .top-controls,
-      .metrics {
+      .metrics,
+      .broj-readiness-grid {
         grid-template-columns: 1fr;
       }
 
@@ -1135,6 +1230,13 @@
       mixed: "반고정",
       flexible: "유동"
     };
+    const BROJ_LESSON_NAME = "대표 PT";
+    const BROJ_DURATION_MINUTES = 60;
+    const BROJ_SEARCH_LABELS = {
+      unknown: "검색 확인 전",
+      ok: "검색 가능",
+      fail: "검색 실패"
+    };
     const SUPABASE_CONFIG = Object.assign({
       url: "",
       anonKey: "",
@@ -1219,7 +1321,9 @@
         memberSearch: "",
         includePendingBroj: false,
         hideDoneBroj: false,
+        brojMode: "test",
         brojDone: {},
+        brojCustomerChecks: {},
         chatMemberId: "m_example_flexible_evening",
         chatMode: "confirm",
         chatCandidateText: "",
@@ -1236,6 +1340,8 @@
       next.members = Array.isArray(parsed.members) && parsed.members.length ? parsed.members : fallback.members;
       next.reviews = parsed.reviews && typeof parsed.reviews === "object" ? parsed.reviews : {};
       next.brojDone = parsed.brojDone && typeof parsed.brojDone === "object" ? parsed.brojDone : {};
+      next.brojMode = parsed.brojMode === "live" ? "live" : "test";
+      next.brojCustomerChecks = parsed.brojCustomerChecks && typeof parsed.brojCustomerChecks === "object" ? parsed.brojCustomerChecks : {};
       next.members.forEach((member) => {
         if (!member.duration || member.duration === 50) member.duration = 80;
         if (member.groupId == null) member.groupId = "";
@@ -2531,8 +2637,45 @@
       renderBroj();
     }
 
+    function setBrojMode(mode) {
+      state.brojMode = mode === "live" ? "live" : "test";
+      saveState();
+      renderBroj();
+    }
+
+    function getBrojCustomerCheck(memberId) {
+      return state.brojCustomerChecks?.[memberId] || "unknown";
+    }
+
+    function setBrojCustomerCheck(memberId, status) {
+      if (!memberId) return;
+      if (!state.brojCustomerChecks) state.brojCustomerChecks = {};
+      if (status === "ok" || status === "fail") {
+        state.brojCustomerChecks[memberId] = status;
+      } else {
+        delete state.brojCustomerChecks[memberId];
+      }
+      saveState();
+      renderBroj();
+    }
+
+    function brojSearchStatusClass(status) {
+      if (status === "ok") return "confirmed";
+      if (status === "fail") return "cancel";
+      return "";
+    }
+
     function brojLessonName(row) {
-      return row.note && /1:1|대표|PT/.test(row.note) ? row.note : "1:1 PT";
+      return BROJ_LESSON_NAME;
+    }
+
+    function brojRegisteredEndTime(row) {
+      const start = timeToMinutes(row.time);
+      return start === null ? "" : minutesToTime(start + BROJ_DURATION_MINUTES);
+    }
+
+    function brojRegisteredTimeRange(row) {
+      return displayTimeRange(row.time, brojRegisteredEndTime(row));
     }
 
     function brojCopyLine(row) {
@@ -2541,7 +2684,9 @@
         `일정명: ${brojLessonName(row)}`,
         `날짜: ${row.dateISO}`,
         `시작: ${row.time}`,
-        `종료: ${row.endTime || ""}`
+        `종료: ${brojRegisteredEndTime(row)}`,
+        `브로제이 기준: ${BROJ_DURATION_MINUTES}분`,
+        `확보분: ${row.duration}분`
       ].join("\n");
     }
 
@@ -2549,51 +2694,77 @@
       return !row.done && !row.needsCheck && !row.conflict && row.dateISO && row.time;
     }
 
+    function isBrojRequestable(row) {
+      return isBrojReady(row) && row.customerSearchStatus !== "fail";
+    }
+
     function brojAutomationRows(rows) {
-      return rows.filter(isBrojReady).map((row) => ({
+      return rows.filter(isBrojRequestable).map((row) => ({
         key: row.key,
         member: row.name,
+        memberId: row.memberId,
         lessonName: brojLessonName(row),
+        lessonType: BROJ_LESSON_NAME,
         date: row.dateISO,
         day: row.day,
         start: row.time,
-        end: row.endTime || "",
-        durationMinutes: row.duration,
-        note: row.note || ""
+        end: brojRegisteredEndTime(row),
+        brojDurationMinutes: BROJ_DURATION_MINUTES,
+        bufferMinutes: row.duration,
+        customerSearchStatus: row.customerSearchStatus || "unknown",
+        note: row.note || "",
+        mode: state.brojMode || "test",
+        save: state.brojMode === "live"
       }));
     }
 
     function brojAutomationRequest(rows) {
+      const mode = state.brojMode === "live" ? "live" : "test";
       const payload = {
         source: "gymlord-weekly-scheduler",
+        mode,
         weekStart: state.weekStart,
         weekLabel: weekRangeLabel(),
         trainer: state.trainerName || "",
+        lessonType: BROJ_LESSON_NAME,
+        brojDurationMinutes: BROJ_DURATION_MINUTES,
         count: rows.length,
         rows
       };
+      const modeLine = mode === "live"
+        ? "실제 등록 모드: 각 일정을 대표 PT로 저장까지 진행해줘. 고객 검색 실패/오류가 보이면 그 건은 건너뛰고 마지막에 알려줘."
+        : "테스트 모드: 고객 검색과 입력 가능 여부만 확인하고, 저장 버튼은 누르지 마. 가능한 건/실패 건을 마지막에 알려줘.";
       return [
         "브로제이 자동등록 요청",
         "",
         "아래 JSON의 rows를 브로제이 캘린더에 순서대로 등록해줘.",
-        "각 일정은 수업 1:1 PT, 강사 서민기 기준이고 고객명/날짜/시작시간/일정명을 확인해서 넣어줘.",
-        "실제 '일정 추가' 저장 버튼을 누르기 전에는 나에게 최종 확인을 받아줘.",
+        `모든 일정은 수업 유형 '${BROJ_LESSON_NAME}', 강사 서민기 기준으로 넣어줘.`,
+        `브로제이에 들어가는 시간은 시작시간 기준 ${BROJ_DURATION_MINUTES}분이야. 앱의 확보분은 충돌 계산용이라 브로제이 종료시간과 다를 수 있어.`,
+        modeLine,
         "",
         JSON.stringify(payload, null, 2)
       ].join("\n");
     }
 
     function renderBroj() {
-      const rows = getBrojRows().map((row) => Object.assign(row, { done: isBrojDone(row), key: brojRowKey(row) }));
+      const rows = getBrojRowsWithState();
+      const mode = state.brojMode === "live" ? "live" : "test";
       const readyRows = rows.filter(isBrojReady);
-      const blockedRows = rows.filter((row) => !row.done && !isBrojReady(row));
+      const requestRows = rows.filter(isBrojRequestable);
+      const blockedRows = rows.filter((row) => !row.done && (!isBrojReady(row) || row.customerSearchStatus === "fail"));
       const doneRows = rows.filter((row) => row.done);
       const visibleRows = state.hideDoneBroj ? rows.filter((row) => !row.done) : rows;
+      const searchUnknownRows = readyRows.filter((row) => row.customerSearchStatus === "unknown");
+      const searchOkRows = readyRows.filter((row) => row.customerSearchStatus === "ok");
+      const searchFailRows = readyRows.filter((row) => row.customerSearchStatus === "fail");
+      const modeDescription = mode === "live"
+        ? "실제 등록 모드입니다. 자동등록 요청에는 대표 PT 60분으로 저장까지 진행하라는 문구가 들어갑니다."
+        : "테스트 모드입니다. 자동등록 요청에는 저장하지 말고 고객 검색/입력 가능 여부만 확인하라는 문구가 들어갑니다.";
       document.getElementById("tab-broj").innerHTML = `
         <div class="panel-head">
           <div>
             <h2>브로제이 등록 대기열</h2>
-            <p class="subtle">확정된 일정만 먼저 모아 브로제이 자동등록 요청으로 복사합니다.</p>
+            <p class="subtle">확정된 일정만 모아 대표 PT 60분 기준으로 브로제이에 넘깁니다.</p>
           </div>
           <div class="panel-actions">
             <label class="inline-check">
@@ -2608,28 +2779,56 @@
             <button id="exportBrojCsv">브로제이 CSV</button>
           </div>
         </div>
+        <div class="broj-mode-panel">
+          <div class="broj-mode-title">
+            <strong>브로제이 등록 모드</strong>
+            <span class="subtle">${escapeHtml(modeDescription)}</span>
+          </div>
+          <div class="segmented">
+            <button data-action="set-broj-mode" data-mode="test" class="${mode === "test" ? "active" : ""}">테스트</button>
+            <button data-action="set-broj-mode" data-mode="live" class="${mode === "live" ? "active" : ""}">실제 등록</button>
+          </div>
+        </div>
+        <div class="broj-readiness-grid">
+          <div class="broj-readiness-card">
+            <span>등록 요청 가능</span>
+            <strong>${requestRows.length}</strong>
+          </div>
+          <div class="broj-readiness-card">
+            <span>검색 확인 전</span>
+            <strong>${searchUnknownRows.length}</strong>
+          </div>
+          <div class="broj-readiness-card">
+            <span>검색 가능 확인</span>
+            <strong>${searchOkRows.length}</strong>
+          </div>
+          <div class="broj-readiness-card">
+            <span>검색 실패 예상</span>
+            <strong>${searchFailRows.length}</strong>
+          </div>
+        </div>
         <div class="broj-queue-head">
           <div class="broj-queue-card">
             <div class="broj-queue-title">
-              <h3>${readyRows.length}건 등록 가능</h3>
+              <h3>${requestRows.length}건 등록 요청 가능</h3>
               ${blockedRows.length ? `<span class="status-chip cancel">${blockedRows.length}건 확인 필요</span>` : `<span class="status-chip confirmed">확인 필요 없음</span>`}
               ${doneRows.length ? `<span class="status-chip adjusted">${doneRows.length}건 완료</span>` : ""}
             </div>
             <div class="broj-queue-meta">
-              ${escapeHtml(weekRangeLabel())} · 완료 체크되지 않았고 시간겹침/확인필요가 없는 일정만 자동등록 요청에 들어갑니다.
+              ${escapeHtml(weekRangeLabel())} · 완료 체크되지 않았고 시간겹침/확인필요/검색실패가 없는 일정만 자동등록 요청에 들어갑니다.
             </div>
           </div>
           <div class="broj-queue-actions">
-            <button class="primary" id="copyBrojAutomationRequest" ${readyRows.length ? "" : "disabled"}>자동등록 요청 복사</button>
-            <button id="copyBrojAutomationJson" ${readyRows.length ? "" : "disabled"}>JSON 복사</button>
+            <button class="primary" id="copyBrojAutomationRequest" ${requestRows.length ? "" : "disabled"}>자동등록 요청 복사</button>
+            <button id="copyBrojAutomationJson" ${requestRows.length ? "" : "disabled"}>JSON 복사</button>
             <button id="openBrojCrm">브로제이 열기</button>
           </div>
         </div>
         <div class="broj-section-label">
-          <h3>등록 가능 큐</h3>
-          <span class="subtle">${readyRows.length}건</span>
+          <h3>등록 요청 큐</h3>
+          <span class="subtle">${requestRows.length}건</span>
         </div>
-        ${readyRows.length ? `<div class="broj-quick-list">${readyRows.map(renderBrojQuickItem).join("")}</div>` : `<div class="empty">지금 바로 등록할 수 있는 일정이 없습니다.</div>`}
+        ${requestRows.length ? `<div class="broj-quick-list">${requestRows.map(renderBrojQuickItem).join("")}</div>` : `<div class="empty">지금 바로 등록 요청에 넣을 일정이 없습니다.</div>`}
         ${blockedRows.length ? `
           <div class="broj-section-label">
             <h3>확인 필요한 일정</h3>
@@ -2648,6 +2847,7 @@
                   <th>사용구간</th>
                   <th>겹침</th>
                   <th>메모</th>
+                  <th>검색상태</th>
                   <th>확인용</th>
                   <th>완료</th>
                 </tr>
@@ -2660,7 +2860,7 @@
           <h3>전체 목록</h3>
           <span class="subtle">${visibleRows.length}건</span>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap broj-all">
           <table>
             <thead>
               <tr>
@@ -2673,12 +2873,13 @@
                 <th>사용구간</th>
                 <th>겹침</th>
                 <th>메모</th>
+                <th>검색상태</th>
                 <th>브로제이 입력</th>
                 <th>완료</th>
               </tr>
             </thead>
             <tbody>
-              ${visibleRows.length ? visibleRows.map(renderBrojRow).join("") : `<tr><td colspan="11" class="empty">브로제이에 등록할 일정이 없습니다.</td></tr>`}
+              ${visibleRows.length ? visibleRows.map(renderBrojRow).join("") : `<tr><td colspan="12" class="empty">브로제이에 등록할 일정이 없습니다.</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -2686,16 +2887,17 @@
     }
 
     function renderBrojQuickItem(row) {
+      const searchStatus = row.customerSearchStatus || "unknown";
       return `
         <article class="broj-quick-item">
           <div class="broj-quick-top">
             <div>
               <div class="broj-quick-name">${escapeHtml(row.name)}</div>
-              <div class="broj-quick-time">${escapeHtml(row.dateLabel)} ${escapeHtml(row.timeRange || row.time)}</div>
+              <div class="broj-quick-time">${escapeHtml(row.dateLabel)} ${escapeHtml(brojRegisteredTimeRange(row) || row.time)}</div>
             </div>
-            <span class="status-chip confirmed">등록대기</span>
+            <span class="status-chip ${brojSearchStatusClass(searchStatus)}">${escapeHtml(BROJ_SEARCH_LABELS[searchStatus] || BROJ_SEARCH_LABELS.unknown)}</span>
           </div>
-          <div class="subtle">${escapeHtml(brojLessonName(row))}${row.note ? ` · ${escapeHtml(row.note)}` : ""}</div>
+          <div class="subtle">${escapeHtml(brojLessonName(row))} · 브로제이 ${BROJ_DURATION_MINUTES}분 · 확보 ${escapeHtml(row.duration)}분${row.note ? ` · ${escapeHtml(row.note)}` : ""}</div>
           <div class="broj-quick-actions">
             <button data-action="copy-broj-value" data-value="${escapeHtml(brojCopyLine(row))}">한건 복사</button>
             <button data-action="copy-broj-json" data-key="${escapeHtml(row.key)}">JSON</button>
@@ -2705,9 +2907,21 @@
       `;
     }
 
+    function renderBrojSearchState(row) {
+      const status = row.customerSearchStatus || "unknown";
+      return `
+        <div class="broj-search-state">
+          <span class="status-chip ${brojSearchStatusClass(status)}">${escapeHtml(BROJ_SEARCH_LABELS[status] || BROJ_SEARCH_LABELS.unknown)}</span>
+          <button data-action="set-broj-search" data-id="${escapeHtml(row.memberId)}" data-status="ok">가능</button>
+          <button data-action="set-broj-search" data-id="${escapeHtml(row.memberId)}" data-status="fail">실패</button>
+          ${status !== "unknown" ? `<button data-action="clear-broj-search" data-id="${escapeHtml(row.memberId)}">초기화</button>` : ""}
+        </div>
+      `;
+    }
+
     function renderBrojRow(row) {
-      const statusLabel = row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]);
-      const statusClass = row.conflict ? "cancel" : row.status;
+      const statusLabel = row.customerSearchStatus === "fail" ? "검색실패" : (row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]));
+      const statusClass = row.customerSearchStatus === "fail" ? "cancel" : (row.conflict ? "cancel" : row.status);
       return `
         <tr class="${row.conflict ? "conflict-row" : ""} ${row.done ? "broj-done-row" : ""}">
           <td><span class="status-chip ${statusClass}">${escapeHtml(statusLabel)}</span></td>
@@ -2719,13 +2933,15 @@
           <td>${escapeHtml(row.timeRange || "")}</td>
           <td>${row.conflict ? `<div class="conflict-detail">${escapeHtml(row.conflictNote)}</div>` : row.conflictIgnored ? `<span class="status-chip adjusted">경고 숨김</span>` : ""}</td>
           <td>${escapeHtml(row.note || "")}</td>
+          <td>${renderBrojSearchState(row)}</td>
           <td>
             <div class="broj-copy-actions">
               <button data-action="copy-broj-value" data-value="${escapeHtml(row.name)}">고객</button>
               <button data-action="copy-broj-value" data-value="${escapeHtml(brojLessonName(row))}">일정명</button>
               <button data-action="copy-broj-value" data-value="${escapeHtml(row.dateISO || "")}">날짜</button>
               <button data-action="copy-broj-value" data-value="${escapeHtml(row.time || "")}">시작</button>
-              <button data-action="copy-broj-value" data-value="${escapeHtml(row.endTime || "")}">종료</button>
+              <button data-action="copy-broj-value" data-value="${escapeHtml(brojRegisteredEndTime(row))}">종료</button>
+              <button data-action="copy-broj-value" data-value="${escapeHtml(brojRegisteredTimeRange(row))}">시간</button>
               <button data-action="copy-broj-value" data-value="${escapeHtml(brojCopyLine(row))}">한줄</button>
             </div>
           </td>
@@ -3054,16 +3270,18 @@
     }
 
     function exportBrojCsv() {
-      const headers = ["등록완료", "상태", "회원명", "일정명", "날짜", "요일", "시작", "종료", "확보분", "사용구간", "겹침", "메모"];
-      const rows = getBrojRows().map((row) => [
-        isBrojDone(row) ? "Y" : "N",
-        row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]),
+      const headers = ["등록완료", "상태", "검색상태", "회원명", "일정명", "날짜", "요일", "시작", "브로제이종료", "브로제이분", "확보분", "사용구간", "겹침", "메모"];
+      const rows = getBrojRowsWithState().map((row) => [
+        row.done ? "Y" : "N",
+        row.customerSearchStatus === "fail" ? "검색실패" : (row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status])),
+        BROJ_SEARCH_LABELS[row.customerSearchStatus] || BROJ_SEARCH_LABELS.unknown,
         row.name,
         brojLessonName(row),
         row.dateISO,
         row.day,
         row.time,
-        row.endTime || "",
+        brojRegisteredEndTime(row),
+        BROJ_DURATION_MINUTES,
         row.duration,
         row.timeRange || "",
         row.conflictNote || "",
@@ -3073,16 +3291,18 @@
     }
 
     function copyBrojRows() {
-      const headers = ["등록완료", "상태", "회원명", "일정명", "날짜", "요일", "시작", "종료", "확보", "사용구간", "겹침", "메모"];
-      const rows = getBrojRows().map((row) => [
-        isBrojDone(row) ? "Y" : "N",
-        row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]),
+      const headers = ["등록완료", "상태", "검색상태", "회원명", "일정명", "날짜", "요일", "시작", "브로제이종료", "브로제이분", "확보", "사용구간", "겹침", "메모"];
+      const rows = getBrojRowsWithState().map((row) => [
+        row.done ? "Y" : "N",
+        row.customerSearchStatus === "fail" ? "검색실패" : (row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status])),
+        BROJ_SEARCH_LABELS[row.customerSearchStatus] || BROJ_SEARCH_LABELS.unknown,
         row.name,
         brojLessonName(row),
         row.dateLabel || row.dateISO,
         row.day,
         row.time,
-        row.endTime || "",
+        brojRegisteredEndTime(row),
+        `${BROJ_DURATION_MINUTES}분`,
         `${row.duration}분`,
         row.timeRange || "",
         row.conflictNote || "",
@@ -3092,7 +3312,11 @@
     }
 
     function getBrojRowsWithState() {
-      return getBrojRows().map((row) => Object.assign(row, { done: isBrojDone(row), key: brojRowKey(row) }));
+      return getBrojRows().map((row) => Object.assign(row, {
+        done: isBrojDone(row),
+        key: brojRowKey(row),
+        customerSearchStatus: getBrojCustomerCheck(row.memberId)
+      }));
     }
 
     function copyBrojAutomationRequest() {
@@ -3110,7 +3334,14 @@
         showToast("자동등록 가능한 일정이 없습니다.");
         return;
       }
-      copyText(JSON.stringify({ weekStart: state.weekStart, weekLabel: weekRangeLabel(), rows: readyRows }, null, 2), "브로제이 JSON을 복사했습니다.");
+      copyText(JSON.stringify({
+        mode: state.brojMode === "live" ? "live" : "test",
+        weekStart: state.weekStart,
+        weekLabel: weekRangeLabel(),
+        lessonType: BROJ_LESSON_NAME,
+        brojDurationMinutes: BROJ_DURATION_MINUTES,
+        rows: readyRows
+      }, null, 2), "브로제이 JSON을 복사했습니다.");
     }
 
     function copyBrojRowJson(key) {
@@ -3454,6 +3685,9 @@
       if (action === "copy-broj-value") copyText(target.dataset.value || "", "브로제이 입력값을 복사했습니다.");
       if (action === "copy-broj-json") copyBrojRowJson(target.dataset.key || "");
       if (action === "mark-broj-done") setBrojDone(target.dataset.key || "", true);
+      if (action === "set-broj-mode") setBrojMode(target.dataset.mode || "test");
+      if (action === "set-broj-search") setBrojCustomerCheck(id, target.dataset.status || "");
+      if (action === "clear-broj-search") setBrojCustomerCheck(id, "");
       if (action === "set-status") {
         updateReview(id, "status", target.dataset.status);
         render();
