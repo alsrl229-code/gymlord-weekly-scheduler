@@ -827,6 +827,117 @@
       font-size: 12px;
     }
 
+    .broj-queue-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .broj-queue-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .broj-queue-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .broj-queue-title h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .broj-queue-meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .broj-queue-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      align-content: center;
+    }
+
+    .broj-queue-actions button {
+      white-space: nowrap;
+    }
+
+    .broj-section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 22px 0 10px;
+    }
+
+    .broj-section-label h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .broj-quick-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .broj-quick-item {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 13px;
+    }
+
+    .broj-quick-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .broj-quick-name {
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .broj-quick-time {
+      color: var(--ink);
+      font-family: var(--mono);
+      font-weight: 900;
+    }
+
+    .broj-quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .broj-quick-actions button {
+      min-height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .broj-blocked {
+      opacity: 0.78;
+    }
+
     .conflict-detail {
       color: var(--red);
       font-size: 12px;
@@ -905,6 +1016,18 @@
 
       .panel-head {
         align-items: flex-start;
+      }
+
+      .broj-queue-head {
+        grid-template-columns: 1fr;
+      }
+
+      .broj-queue-actions {
+        justify-content: flex-start;
+      }
+
+      .broj-queue-actions button {
+        flex: 1 1 150px;
       }
 
       .member-table {
@@ -2422,14 +2545,55 @@
       ].join("\n");
     }
 
+    function isBrojReady(row) {
+      return !row.done && !row.needsCheck && !row.conflict && row.dateISO && row.time;
+    }
+
+    function brojAutomationRows(rows) {
+      return rows.filter(isBrojReady).map((row) => ({
+        key: row.key,
+        member: row.name,
+        lessonName: brojLessonName(row),
+        date: row.dateISO,
+        day: row.day,
+        start: row.time,
+        end: row.endTime || "",
+        durationMinutes: row.duration,
+        note: row.note || ""
+      }));
+    }
+
+    function brojAutomationRequest(rows) {
+      const payload = {
+        source: "gymlord-weekly-scheduler",
+        weekStart: state.weekStart,
+        weekLabel: weekRangeLabel(),
+        trainer: state.trainerName || "",
+        count: rows.length,
+        rows
+      };
+      return [
+        "브로제이 자동등록 요청",
+        "",
+        "아래 JSON의 rows를 브로제이 캘린더에 순서대로 등록해줘.",
+        "각 일정은 수업 1:1 PT, 강사 서민기 기준이고 고객명/날짜/시작시간/일정명을 확인해서 넣어줘.",
+        "실제 '일정 추가' 저장 버튼을 누르기 전에는 나에게 최종 확인을 받아줘.",
+        "",
+        JSON.stringify(payload, null, 2)
+      ].join("\n");
+    }
+
     function renderBroj() {
       const rows = getBrojRows().map((row) => Object.assign(row, { done: isBrojDone(row), key: brojRowKey(row) }));
+      const readyRows = rows.filter(isBrojReady);
+      const blockedRows = rows.filter((row) => !row.done && !isBrojReady(row));
+      const doneRows = rows.filter((row) => row.done);
       const visibleRows = state.hideDoneBroj ? rows.filter((row) => !row.done) : rows;
       document.getElementById("tab-broj").innerHTML = `
         <div class="panel-head">
           <div>
-            <h2>브로제이 등록 리스트</h2>
-            <p class="subtle">브로제이 일정 추가 창에 넣을 값을 한 건씩 복사합니다.</p>
+            <h2>브로제이 등록 대기열</h2>
+            <p class="subtle">확정된 일정만 먼저 모아 브로제이 자동등록 요청으로 복사합니다.</p>
           </div>
           <div class="panel-actions">
             <label class="inline-check">
@@ -2443,6 +2607,58 @@
             <button id="copyBrojRows">표 복사</button>
             <button id="exportBrojCsv">브로제이 CSV</button>
           </div>
+        </div>
+        <div class="broj-queue-head">
+          <div class="broj-queue-card">
+            <div class="broj-queue-title">
+              <h3>${readyRows.length}건 등록 가능</h3>
+              ${blockedRows.length ? `<span class="status-chip cancel">${blockedRows.length}건 확인 필요</span>` : `<span class="status-chip confirmed">확인 필요 없음</span>`}
+              ${doneRows.length ? `<span class="status-chip adjusted">${doneRows.length}건 완료</span>` : ""}
+            </div>
+            <div class="broj-queue-meta">
+              ${escapeHtml(weekRangeLabel())} · 완료 체크되지 않았고 시간겹침/확인필요가 없는 일정만 자동등록 요청에 들어갑니다.
+            </div>
+          </div>
+          <div class="broj-queue-actions">
+            <button class="primary" id="copyBrojAutomationRequest" ${readyRows.length ? "" : "disabled"}>자동등록 요청 복사</button>
+            <button id="copyBrojAutomationJson" ${readyRows.length ? "" : "disabled"}>JSON 복사</button>
+            <button id="openBrojCrm">브로제이 열기</button>
+          </div>
+        </div>
+        <div class="broj-section-label">
+          <h3>등록 가능 큐</h3>
+          <span class="subtle">${readyRows.length}건</span>
+        </div>
+        ${readyRows.length ? `<div class="broj-quick-list">${readyRows.map(renderBrojQuickItem).join("")}</div>` : `<div class="empty">지금 바로 등록할 수 있는 일정이 없습니다.</div>`}
+        ${blockedRows.length ? `
+          <div class="broj-section-label">
+            <h3>확인 필요한 일정</h3>
+            <span class="subtle">${blockedRows.length}건</span>
+          </div>
+          <div class="table-wrap broj-blocked">
+            <table>
+              <thead>
+                <tr>
+                  <th>상태</th>
+                  <th>회원명</th>
+                  <th>날짜</th>
+                  <th>요일</th>
+                  <th>시작</th>
+                  <th>확보</th>
+                  <th>사용구간</th>
+                  <th>겹침</th>
+                  <th>메모</th>
+                  <th>확인용</th>
+                  <th>완료</th>
+                </tr>
+              </thead>
+              <tbody>${blockedRows.map(renderBrojRow).join("")}</tbody>
+            </table>
+          </div>
+        ` : ""}
+        <div class="broj-section-label">
+          <h3>전체 목록</h3>
+          <span class="subtle">${visibleRows.length}건</span>
         </div>
         <div class="table-wrap">
           <table>
@@ -2466,6 +2682,26 @@
             </tbody>
           </table>
         </div>
+      `;
+    }
+
+    function renderBrojQuickItem(row) {
+      return `
+        <article class="broj-quick-item">
+          <div class="broj-quick-top">
+            <div>
+              <div class="broj-quick-name">${escapeHtml(row.name)}</div>
+              <div class="broj-quick-time">${escapeHtml(row.dateLabel)} ${escapeHtml(row.timeRange || row.time)}</div>
+            </div>
+            <span class="status-chip confirmed">등록대기</span>
+          </div>
+          <div class="subtle">${escapeHtml(brojLessonName(row))}${row.note ? ` · ${escapeHtml(row.note)}` : ""}</div>
+          <div class="broj-quick-actions">
+            <button data-action="copy-broj-value" data-value="${escapeHtml(brojCopyLine(row))}">한건 복사</button>
+            <button data-action="copy-broj-json" data-key="${escapeHtml(row.key)}">JSON</button>
+            <button data-action="mark-broj-done" data-key="${escapeHtml(row.key)}">완료</button>
+          </div>
+        </article>
       `;
     }
 
@@ -2855,6 +3091,34 @@
       copyText([headers, ...rows].map((row) => row.join("\t")).join("\n"), "브로제이 표를 복사했습니다.");
     }
 
+    function getBrojRowsWithState() {
+      return getBrojRows().map((row) => Object.assign(row, { done: isBrojDone(row), key: brojRowKey(row) }));
+    }
+
+    function copyBrojAutomationRequest() {
+      const readyRows = brojAutomationRows(getBrojRowsWithState());
+      if (!readyRows.length) {
+        showToast("자동등록 가능한 일정이 없습니다.");
+        return;
+      }
+      copyText(brojAutomationRequest(readyRows), "브로제이 자동등록 요청을 복사했습니다.");
+    }
+
+    function copyBrojAutomationJson() {
+      const readyRows = brojAutomationRows(getBrojRowsWithState());
+      if (!readyRows.length) {
+        showToast("자동등록 가능한 일정이 없습니다.");
+        return;
+      }
+      copyText(JSON.stringify({ weekStart: state.weekStart, weekLabel: weekRangeLabel(), rows: readyRows }, null, 2), "브로제이 JSON을 복사했습니다.");
+    }
+
+    function copyBrojRowJson(key) {
+      const row = getBrojRowsWithState().find((item) => item.key === key);
+      if (!row) return;
+      copyText(JSON.stringify(brojAutomationRows([row])[0] || row, null, 2), "한 건 JSON을 복사했습니다.");
+    }
+
     function copyAllMessages() {
       const text = getActiveMembers().map((member) => `[${member.name}]\n${buildMessage(member)}`).join("\n\n---\n\n");
       copyText(text, "전체 카톡 문구를 복사했습니다.");
@@ -3188,6 +3452,8 @@
       if (action === "reset-duration-override") resetDurationOverride(id, target.dataset.key || "");
       if (action === "remove-candidate-slot") removeCandidateSlot(id, target.dataset.key || "");
       if (action === "copy-broj-value") copyText(target.dataset.value || "", "브로제이 입력값을 복사했습니다.");
+      if (action === "copy-broj-json") copyBrojRowJson(target.dataset.key || "");
+      if (action === "mark-broj-done") setBrojDone(target.dataset.key || "", true);
       if (action === "set-status") {
         updateReview(id, "status", target.dataset.status);
         render();
@@ -3212,7 +3478,10 @@
       if (target.id === "markFixedConfirmed") markFixedConfirmed();
       if (target.id === "resetWeekResponses") resetWeekResponses();
       if (target.id === "copyBrojRows") copyBrojRows();
+      if (target.id === "copyBrojAutomationRequest") copyBrojAutomationRequest();
+      if (target.id === "copyBrojAutomationJson") copyBrojAutomationJson();
       if (target.id === "exportBrojCsv") exportBrojCsv();
+      if (target.id === "openBrojCrm") window.open("https://crm-beta.broj.co.kr/", "_blank");
       if (target.id === "copyHistoryRows") copyHistoryRows();
       if (target.id === "exportHistoryCsv") exportHistoryCsv();
       if (target.id === "openDeployGuide") window.open("DEPLOY.md", "_blank");
