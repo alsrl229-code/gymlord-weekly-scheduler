@@ -1001,6 +1001,8 @@
     }, window.GYMLORD_SUPABASE || {});
 
     let activeTab = "members";
+    let memberSearchRenderTimer = null;
+    let memberSearchComposing = false;
     let supabaseClient = null;
     let cloudSaveTimer = null;
     const cloudState = {
@@ -1744,6 +1746,27 @@
       cloudState.session = null;
       cloudState.email = "";
       setCloudMessage("로그아웃됨", "signed-out");
+    }
+
+    function focusMemberSearch() {
+      const input = document.getElementById("memberSearch");
+      if (!input) return;
+      input.focus({ preventScroll: true });
+      const cursor = input.value.length;
+      try {
+        input.setSelectionRange(cursor, cursor);
+      } catch (error) {
+        // Some mobile browsers do not allow selection control on search inputs.
+      }
+    }
+
+    function scheduleMemberSearchRender(delay = 240) {
+      window.clearTimeout(memberSearchRenderTimer);
+      memberSearchRenderTimer = window.setTimeout(() => {
+        if (memberSearchComposing || activeTab !== "members") return;
+        renderMembers();
+        focusMemberSearch();
+      }, delay);
     }
 
     function renderMembers() {
@@ -3135,7 +3158,8 @@
       if (target.id === "memberSearch") {
         state.memberSearch = target.value;
         saveState();
-        renderMembers();
+        if (event.isComposing || memberSearchComposing) return;
+        scheduleMemberSearchRender();
       }
       if (target.id === "chatCandidateText") {
         state.chatCandidateText = target.value;
@@ -3160,6 +3184,22 @@
       if (target.dataset.reviewId && target.dataset.reviewField) {
         updateReview(target.dataset.reviewId, target.dataset.reviewField, target.value);
       }
+    });
+
+    document.addEventListener("compositionstart", (event) => {
+      const target = event.target;
+      if (target.id !== "memberSearch") return;
+      memberSearchComposing = true;
+      window.clearTimeout(memberSearchRenderTimer);
+    });
+
+    document.addEventListener("compositionend", (event) => {
+      const target = event.target;
+      if (target.id !== "memberSearch") return;
+      memberSearchComposing = false;
+      state.memberSearch = target.value;
+      saveState();
+      scheduleMemberSearchRender(180);
     });
 
     document.addEventListener("change", (event) => {
