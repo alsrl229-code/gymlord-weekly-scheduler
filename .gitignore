@@ -1,0 +1,5 @@
+.DS_Store
+private/
+*.private.*
+index.backup-*.html
+짐로드_PT회원_정리.csv
