@@ -1,0 +1,3150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>짐로드 주간 스케줄 관리</title>
+  <style>
+    :root {
+      --bg: #f4f5f1;
+      --surface: #ffffff;
+      --surface-2: #eef1ec;
+      --ink: #1e241f;
+      --muted: #697267;
+      --line: #d9ded5;
+      --green: #2f654a;
+      --green-2: #214735;
+      --copper: #b46328;
+      --gold: #d7a947;
+      --red: #b74b41;
+      --blue: #416989;
+      --shadow: 0 12px 30px rgba(30, 36, 31, 0.08);
+      --radius: 8px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --font: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 38px;
+      border-radius: 6px;
+      padding: 0 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      border-color: #bfc8bb;
+      background: #f9faf7;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button.primary {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: var(--green-2);
+      border-color: var(--green-2);
+    }
+
+    button.danger {
+      color: var(--red);
+      border-color: #e2bcb8;
+    }
+
+    button.ghost {
+      background: transparent;
+    }
+
+    button.icon-only {
+      width: 38px;
+      padding: 0;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      padding: 9px 10px;
+      outline: none;
+      min-height: 38px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(47, 101, 74, 0.13);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 132px;
+      line-height: 1.55;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 18px clamp(16px, 3vw, 36px);
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(300px, 780px);
+      gap: 18px;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 7px;
+      background: var(--ink);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(22px, 2.4vw, 34px);
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .top-controls {
+      display: grid;
+      grid-template-columns: minmax(145px, 1fr) minmax(120px, 0.8fr) auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .tabs {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(244, 245, 241, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      padding: 10px clamp(16px, 3vw, 36px);
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      min-width: 112px;
+      background: transparent;
+      border-color: transparent;
+      color: var(--muted);
+    }
+
+    .tab.active {
+      color: #fff;
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    main {
+      padding: 22px clamp(16px, 3vw, 36px) 42px;
+      display: grid;
+      gap: 18px;
+      max-width: 1500px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      min-height: 86px;
+      display: grid;
+      gap: 6px;
+      box-shadow: 0 5px 14px rgba(30, 36, 31, 0.04);
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .metric.warn strong {
+      color: var(--copper);
+    }
+
+    .metric.danger strong {
+      color: var(--red);
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .panel-actions,
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcf8;
+    }
+
+    .toolbar .search {
+      flex: 1 1 260px;
+      max-width: 420px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    th {
+      background: var(--surface-2);
+      color: #3d473f;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td.compact {
+      width: 62px;
+    }
+
+    td.wide {
+      min-width: 220px;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #ecefe9;
+      color: #3c473f;
+      white-space: nowrap;
+    }
+
+    .status-chip.confirmed,
+    .status-chip.adjusted {
+      background: rgba(47, 101, 74, 0.14);
+      color: var(--green-2);
+    }
+
+    .status-chip.change {
+      background: rgba(183, 99, 40, 0.16);
+      color: #874714;
+    }
+
+    .status-chip.cancel {
+      background: rgba(183, 75, 65, 0.14);
+      color: var(--red);
+    }
+
+    .response-overview {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(160px, 1fr));
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcf8;
+    }
+
+    .response-pill {
+      min-height: 58px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 800;
+    }
+
+    .response-pill strong {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .response-pill.needs {
+      border-color: rgba(183, 99, 40, 0.34);
+      background: rgba(183, 99, 40, 0.09);
+      color: #874714;
+    }
+
+    .response-pill.done {
+      border-color: rgba(47, 101, 74, 0.28);
+      background: rgba(47, 101, 74, 0.09);
+      color: var(--green-2);
+    }
+
+    .response-section + .response-section {
+      border-top: 1px solid var(--line);
+    }
+
+    .response-section-head {
+      padding: 14px 16px;
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .response-section-head.needs {
+      background: rgba(183, 99, 40, 0.11);
+    }
+
+    .response-section-head.done {
+      background: rgba(47, 101, 74, 0.1);
+    }
+
+    .response-section-head span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .response-row.needs td {
+      background: rgba(183, 99, 40, 0.045);
+    }
+
+    .response-row.done td {
+      background: rgba(47, 101, 74, 0.035);
+    }
+
+    .message-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .message-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .message-card .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .message-card textarea {
+      min-height: 210px;
+      font-size: 13px;
+      background: #fbfcf8;
+    }
+
+    .chat-work {
+      display: grid;
+      grid-template-columns: minmax(260px, 380px) minmax(0, 1fr);
+      min-height: 640px;
+    }
+
+    .chat-sidebar {
+      border-right: 1px solid var(--line);
+      background: #fbfcf8;
+      overflow: auto;
+      max-height: 760px;
+    }
+
+    .chat-member-button {
+      width: 100%;
+      min-height: 78px;
+      padding: 12px 14px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      text-align: left;
+      align-items: start;
+      white-space: normal;
+    }
+
+    .chat-member-button:hover,
+    .chat-member-button.active {
+      background: #eef1ec;
+    }
+
+    .chat-member-main {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .chat-member-main strong {
+      font-size: 14px;
+    }
+
+    .chat-member-main span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .chat-main {
+      padding: 16px;
+      display: grid;
+      align-content: start;
+      gap: 14px;
+    }
+
+    .chat-compose-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .chat-compose-grid .wide-field {
+      grid-column: span 3;
+    }
+
+    .chat-draft {
+      min-height: 170px;
+      background: #fbfcf8;
+    }
+
+    .candidate-list {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 2px;
+    }
+
+    .candidate-chip {
+      min-height: 30px;
+      border-radius: 999px;
+      border-color: rgba(47, 101, 74, 0.28);
+      color: var(--green-2);
+      background: rgba(47, 101, 74, 0.08);
+      font-size: 12px;
+    }
+
+    .override-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+    }
+
+    .override-item {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcf8;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .override-item-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .override-item strong {
+      font-size: 13px;
+    }
+
+    .override-item small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .parsed-result {
+      border: 1px solid rgba(47, 101, 74, 0.22);
+      background: rgba(47, 101, 74, 0.07);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .parsed-result strong {
+      color: var(--green-2);
+      font-size: 14px;
+    }
+
+    .parsed-result code {
+      font-family: var(--mono);
+      white-space: normal;
+      color: var(--ink);
+      line-height: 1.45;
+    }
+
+    .mini-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .mini-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .week-strip {
+      background: var(--ink);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .week-strip strong {
+      font-size: 18px;
+    }
+
+    .week-strip span {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+    }
+
+    .week-strip button {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.58);
+    }
+
+    .week-strip button:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.86);
+    }
+
+    .sync-strip {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: 0 5px 14px rgba(30, 36, 31, 0.04);
+    }
+
+    .sync-main {
+      display: grid;
+      gap: 3px;
+      min-width: 220px;
+    }
+
+    .sync-main strong {
+      font-size: 14px;
+    }
+
+    .sync-main span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .sync-actions {
+      display: flex;
+      align-items: end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sync-actions label {
+      min-width: 220px;
+    }
+
+    .empty {
+      padding: 34px 16px;
+      color: var(--muted);
+      text-align: center;
+      background: #fbfcf8;
+    }
+
+    .inline-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .inline-check input {
+      width: auto;
+      min-height: auto;
+      accent-color: var(--green);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .conflict-row td {
+      background: rgba(183, 75, 65, 0.08);
+    }
+
+    .conflict-detail {
+      color: var(--red);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .mono {
+      font-family: var(--mono);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(18px);
+      background: var(--ink);
+      color: #fff;
+      padding: 11px 14px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+      z-index: 20;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      max-width: calc(100vw - 32px);
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 1040px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+      }
+
+      .chat-work {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        max-height: 320px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .top-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      }
+
+      .response-overview {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-compose-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-compose-grid .wide-field {
+        grid-column: auto;
+      }
+
+      .panel-head {
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .top-controls,
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .brand {
+        align-items: flex-start;
+      }
+
+      .mark {
+        width: 38px;
+        height: 38px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">G</div>
+        <div>
+          <h1>짐로드 주간 스케줄</h1>
+          <p class="subtle">회원 확인, 카톡 문구, 브로제이 등록 리스트</p>
+        </div>
+      </div>
+      <div class="top-controls">
+        <label>
+          다음 주 시작일
+          <input id="weekStart" type="date">
+        </label>
+        <label>
+          담당자
+          <input id="trainerName" type="text" placeholder="담당자명">
+        </label>
+        <button id="exportJson" title="전체 데이터를 JSON으로 저장">내보내기</button>
+        <button id="importJsonButton" title="저장해 둔 JSON 불러오기">불러오기</button>
+        <input id="importJsonInput" class="hidden" type="file" accept="application/json,.json">
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="작업 탭">
+      <button class="tab active" data-tab="members">회원표</button>
+      <button class="tab" data-tab="chat">카톡작업</button>
+      <button class="tab" data-tab="messages">카톡문구</button>
+      <button class="tab" data-tab="responses">응답정리</button>
+      <button class="tab" data-tab="broj">브로제이</button>
+      <button class="tab" data-tab="history">이력</button>
+    </nav>
+
+    <main>
+      <section class="week-strip">
+        <div>
+          <strong id="weekLabel"></strong>
+          <span id="weekSubLabel"></span>
+        </div>
+        <div class="panel-actions">
+          <button id="setNextMonday" class="ghost">다음 월요일</button>
+          <button id="copySummary" class="ghost">요약 복사</button>
+        </div>
+      </section>
+
+      <section class="metrics" id="metrics"></section>
+
+      <section class="sync-strip" id="syncPanel"></section>
+
+      <section class="panel" id="tab-members"></section>
+      <section class="panel hidden" id="tab-chat"></section>
+      <section class="panel hidden" id="tab-messages"></section>
+      <section class="panel hidden" id="tab-responses"></section>
+      <section class="panel hidden" id="tab-broj"></section>
+      <section class="panel hidden" id="tab-history"></section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./config.js"></script>
+  <script>
+    const STORAGE_KEY = "gymlord.weeklyScheduler.v1";
+    const DAYS = ["월", "화", "수", "목", "금", "토", "일"];
+    const STATUS_LABELS = {
+      pending: "답변대기",
+      confirmed: "확정",
+      change: "변경요청",
+      adjusted: "변경반영",
+      cancel: "취소"
+    };
+    const TYPE_LABELS = {
+      fixed: "고정",
+      mixed: "반고정",
+      flexible: "유동"
+    };
+    const SUPABASE_CONFIG = Object.assign({
+      url: "",
+      anonKey: "",
+      table: "trainer_scheduler_states"
+    }, window.GYMLORD_SUPABASE || {});
+
+    let activeTab = "members";
+    let supabaseClient = null;
+    let cloudSaveTimer = null;
+    const cloudState = {
+      configured: false,
+      session: null,
+      email: "",
+      status: "local",
+      message: "로컬 저장 중",
+      busy: false,
+      applyingRemote: false,
+      lastUpdatedAt: ""
+    };
+    let state = loadState();
+
+    function defaultState() {
+      const weekStart = toISODate(getNextMonday(new Date()));
+      const members = [
+        {
+          id: "m_example_fixed_morning",
+          name: "예시회원 고정아침",
+          type: "fixed",
+          active: true,
+          groupId: "",
+          fixedText: "월 09:00, 목 09:00",
+          availability: "월/목 오전",
+          duration: 80,
+          note: "공개용 예시 데이터입니다. 실제 회원은 로그인 후 클라우드 또는 JSON 불러오기로 관리하세요."
+        },
+        {
+          id: "m_example_flexible_evening",
+          name: "예시회원 유동저녁",
+          type: "flexible",
+          active: true,
+          groupId: "",
+          fixedText: "",
+          availability: "평일 18:00-20:00 시작 선호",
+          duration: 80,
+          note: "요일은 유동적인 예시 회원입니다."
+        },
+        {
+          id: "m_example_shared_a",
+          name: "예시회원 공유A",
+          type: "mixed",
+          active: true,
+          groupId: "예시공유그룹",
+          fixedText: "화 08:30",
+          availability: "공유 슬롯 예시",
+          duration: 80,
+          note: "같은 공유그룹 회원끼리는 겹침 경고에서 제외됩니다."
+        },
+        {
+          id: "m_example_shared_b",
+          name: "예시회원 공유B",
+          type: "mixed",
+          active: true,
+          groupId: "예시공유그룹",
+          fixedText: "화 17:00",
+          availability: "공유 슬롯 예시",
+          duration: 80,
+          note: "공개 저장소에 실제 회원 정보가 들어가지 않도록 만든 예시입니다."
+        }
+      ];
+      members.forEach((member) => {
+        if (member.duration === 50) member.duration = 80;
+      });
+      return {
+        studioName: "짐로드",
+        trainerName: "밍키",
+        weekStart,
+        members,
+        reviews: {},
+        messageTone: "warm",
+        memberSearch: "",
+        includePendingBroj: false,
+        chatMemberId: "m_example_flexible_evening",
+        chatMode: "confirm",
+        chatCandidateText: "",
+        chatPasteText: "",
+        historyWeek: weekStart,
+        durationMigratedToBuffer: true
+      };
+    }
+
+    function normalizeStateObject(imported = {}) {
+      const parsed = imported && typeof imported === "object" ? imported : {};
+      const fallback = defaultState();
+      const next = Object.assign(fallback, parsed);
+      next.members = Array.isArray(parsed.members) && parsed.members.length ? parsed.members : fallback.members;
+      next.reviews = parsed.reviews && typeof parsed.reviews === "object" ? parsed.reviews : {};
+      next.members.forEach((member) => {
+        if (!member.duration || member.duration === 50) member.duration = 80;
+        if (member.groupId == null) member.groupId = "";
+      });
+      next.durationMigratedToBuffer = true;
+      if (!next.historyWeek || !next.reviews[next.historyWeek]) next.historyWeek = next.weekStart;
+      if (!next.members.some((member) => member.id === next.chatMemberId)) {
+        next.chatMemberId = next.members.find((member) => member.active)?.id || next.members[0]?.id || "";
+      }
+      return next;
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return defaultState();
+        return normalizeStateObject(JSON.parse(raw));
+      } catch (error) {
+        console.warn(error);
+        return defaultState();
+      }
+    }
+
+    function saveState(options = {}) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (!options.skipCloud) queueCloudSave();
+    }
+
+    function makeId() {
+      return "m_" + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+    }
+
+    function toISODate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseISODate(value) {
+      const parts = String(value || "").split("-").map(Number);
+      if (parts.length !== 3 || parts.some(Number.isNaN)) return getNextMonday(new Date());
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function addDays(date, days) {
+      const next = new Date(date);
+      next.setDate(next.getDate() + days);
+      return next;
+    }
+
+    function getNextMonday(date) {
+      const current = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const day = current.getDay();
+      const daysUntilMonday = (8 - day) % 7 || 7;
+      return addDays(current, daysUntilMonday);
+    }
+
+    function formatKoreanDate(date, withYear = false) {
+      const prefix = withYear ? `${date.getFullYear()}.` : "";
+      return `${prefix}${date.getMonth() + 1}/${date.getDate()}(${DAYS[(date.getDay() + 6) % 7]})`;
+    }
+
+    function weekRangeLabel() {
+      const start = parseISODate(state.weekStart);
+      const end = addDays(start, 6);
+      return `${formatKoreanDate(start, true)} - ${formatKoreanDate(end)}`;
+    }
+
+    function getWeekReview() {
+      if (!state.reviews[state.weekStart]) state.reviews[state.weekStart] = {};
+      const review = state.reviews[state.weekStart];
+      state.members.forEach((member) => {
+        if (!review[member.id]) {
+          review[member.id] = {
+            status: "pending",
+            request: "",
+            finalText: member.fixedText || "",
+            note: "",
+            customMessage: "",
+            durationOverrides: {},
+            conflictIgnores: {}
+          };
+        } else {
+          if (!review[member.id].durationOverrides) review[member.id].durationOverrides = {};
+          if (!review[member.id].conflictIgnores) review[member.id].conflictIgnores = {};
+        }
+      });
+      return review;
+    }
+
+    function getReview(memberId) {
+      return getWeekReview()[memberId] || {};
+    }
+
+    function normalizeTime(hourText, minuteText, meridiemText) {
+      let hour = Number(hourText);
+      let minute = minuteText === undefined || minuteText === "" ? 0 : Number(minuteText);
+      const meridiem = (meridiemText || "").replace(/\s/g, "");
+      if (meridiem.includes("오후") && hour < 12) hour += 12;
+      if (meridiem.includes("오전") && hour === 12) hour = 0;
+      if (Number.isNaN(hour) || Number.isNaN(minute)) return "";
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return "";
+      return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    }
+
+    function resolveBareDayDate(dayText, weekStart) {
+      const day = Number(dayText);
+      const weekEnd = addDays(weekStart, 6);
+      const candidates = [-1, 0, 1].map((monthOffset) => new Date(weekStart.getFullYear(), weekStart.getMonth() + monthOffset, day));
+      const inWeek = candidates.find((date) => date >= weekStart && date <= weekEnd);
+      if (inWeek) return inWeek;
+      return candidates.sort((a, b) => Math.abs(a - weekStart) - Math.abs(b - weekStart))[0];
+    }
+
+    function pushScheduleResult(results, raw, date, time) {
+      if (!time) return;
+      results.push({
+        raw: raw.trim(),
+        date,
+        dateISO: toISODate(date),
+        day: DAYS[(date.getDay() + 6) % 7],
+        dayIndex: (date.getDay() + 6) % 7,
+        time
+      });
+    }
+
+    function parseScheduleText(text, weekStartValue = state.weekStart) {
+      const source = String(text || "")
+        .replace(/[，、]/g, ",")
+        .replace(/([월화수목금토일])(?=[월화수목금토일])/g, "$1 ");
+      const weekStart = parseISODate(weekStartValue);
+      const results = [];
+      let scrubbed = source;
+
+      const dateRegex = /(?:(\d{1,2})[\/.](\d{1,2})|(\d{1,2})월\s*(\d{1,2})일)(?:\s*[월화수목금토일](?:요일)?)?\s*(오전|오후)?\s*([0-2]?\d)(?:\s*[:시]\s*([0-5]\d))?/g;
+      scrubbed = scrubbed.replace(dateRegex, (match, slashMonth, slashDay, koMonth, koDay, meridiem, hour, minute) => {
+        const month = Number(slashMonth || koMonth);
+        const day = Number(slashDay || koDay);
+        const date = new Date(weekStart.getFullYear(), month - 1, day);
+        const time = normalizeTime(hour, minute, meridiem);
+        pushScheduleResult(results, match, date, time);
+        return " ";
+      });
+
+      const groupedDayRegex = /([월화수목금토일](?:요일)?(?:\s*(?:\/|,|·|\s)\s*[월화수목금토일](?:요일)?)+)\s*(오전|오후)?\s*([0-2]?\d)(?:\s*[:시]\s*([0-5]\d))?/g;
+      scrubbed = scrubbed.replace(groupedDayRegex, (match, dayGroup, meridiem, hour, minute) => {
+        const time = normalizeTime(hour, minute, meridiem);
+        const dayMatches = [...dayGroup.matchAll(/([월화수목금토일])(?:요일)?/g)];
+        dayMatches.forEach((dayMatch) => {
+          const dayIndex = DAYS.indexOf(dayMatch[1]);
+          const date = addDays(weekStart, dayIndex);
+          pushScheduleResult(results, `${dayMatch[1]} ${meridiem || ""} ${hour}${minute ? `:${minute}` : ""}`, date, time);
+        });
+        return " ";
+      });
+
+      const dayRegex = /([월화수목금토일])(?:요일)?\s*(오전|오후)?\s*([0-2]?\d)(?:\s*[:시]\s*([0-5]\d))?/g;
+      let match;
+      while ((match = dayRegex.exec(scrubbed)) !== null) {
+        const previousChar = scrubbed[match.index - 1] || "";
+        if (/\d/.test(previousChar) || previousChar === "월") continue;
+        const dayIndex = DAYS.indexOf(match[1]);
+        const date = addDays(weekStart, dayIndex);
+        const time = normalizeTime(match[3], match[4], match[2]);
+        pushScheduleResult(results, match[0], date, time);
+      }
+      scrubbed = scrubbed.replace(dayRegex, (fullMatch, day, meridiem, hour, minute, offset) => {
+        const previousChar = scrubbed[offset - 1] || "";
+        return /\d/.test(previousChar) || previousChar === "월" ? fullMatch : " ";
+      });
+
+      const bareDayRegex = /(\d{1,2})(?:일(?:\s*[월화수목금토일](?:요일)?(?:만)?)?|\s+[월화수목금토일](?:요일)?(?:만)?)\s*(오전|오후)?\s*([0-2]?\d)(?:\s*[:시]\s*([0-5]\d))?/g;
+      scrubbed = scrubbed.replace(bareDayRegex, (match, bareDay, meridiem, hour, minute) => {
+        const date = resolveBareDayDate(bareDay, weekStart);
+        const time = normalizeTime(hour, minute, meridiem);
+        pushScheduleResult(results, match, date, time);
+        return " ";
+      });
+
+      return results.sort((a, b) => {
+        const dateDiff = a.date - b.date;
+        return dateDiff || a.time.localeCompare(b.time);
+      });
+    }
+
+    function scheduleSummary(text) {
+      const slots = parseScheduleText(text);
+      if (!slots.length) return "고정 일정 없음";
+      return slots.map((slot) => `${formatKoreanDate(slot.date)} ${slot.time}`).join(", ");
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function getActiveMembers() {
+      return state.members.filter((member) => member.active);
+    }
+
+    function memberDuration(member) {
+      const duration = Number(member?.duration);
+      return Number.isFinite(duration) && duration > 0 ? duration : 80;
+    }
+
+    function slotOverrideKey(dateISO, time) {
+      return dateISO && time ? `${dateISO}|${time}` : "";
+    }
+
+    function getDurationOverrides(memberId) {
+      const review = getReview(memberId);
+      if (!review.durationOverrides) review.durationOverrides = {};
+      return review.durationOverrides;
+    }
+
+    function getConflictIgnores(memberId) {
+      const review = getReview(memberId);
+      if (!review.conflictIgnores) review.conflictIgnores = {};
+      return review.conflictIgnores;
+    }
+
+    function slotDuration(member, dateISO, time) {
+      const overrides = getDurationOverrides(member.id);
+      const override = Number(overrides[slotOverrideKey(dateISO, time)]);
+      return Number.isFinite(override) && override > 0 ? override : memberDuration(member);
+    }
+
+    function hasSlotDurationOverride(member, dateISO, time) {
+      const overrides = getDurationOverrides(member.id);
+      return Object.prototype.hasOwnProperty.call(overrides, slotOverrideKey(dateISO, time));
+    }
+
+    function isSlotConflictIgnored(member, dateISO, time) {
+      const ignores = getConflictIgnores(member.id);
+      return Boolean(ignores[slotOverrideKey(dateISO, time)]);
+    }
+
+    function memberGroupId(member) {
+      return String(member?.groupId || "").trim();
+    }
+
+    // 같은 공유그룹(부부 등)에 속한 두 회원인지 — 공유 슬롯이라 서로 겹침 검사에서 제외
+    function membersShareGroup(idA, idB) {
+      if (!idA || !idB || idA === idB) return false;
+      const a = state.members.find((member) => member.id === idA);
+      const b = state.members.find((member) => member.id === idB);
+      const groupA = memberGroupId(a);
+      const groupB = memberGroupId(b);
+      return groupA !== "" && groupA === groupB;
+    }
+
+    function timeToMinutes(time) {
+      const [hourText, minuteText] = String(time || "").split(":");
+      const hour = Number(hourText);
+      const minute = Number(minuteText || 0);
+      if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+      return hour * 60 + minute;
+    }
+
+    function minutesToTime(totalMinutes) {
+      if (!Number.isFinite(totalMinutes)) return "";
+      const normalized = ((totalMinutes % 1440) + 1440) % 1440;
+      const hour = Math.floor(normalized / 60);
+      const minute = normalized % 60;
+      return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    }
+
+    function rangesOverlap(aStart, aEnd, bStart, bEnd) {
+      return Number.isFinite(aStart) && Number.isFinite(aEnd) && Number.isFinite(bStart) && Number.isFinite(bEnd) && aStart < bEnd && aEnd > bStart;
+    }
+
+    function generateMessage(member) {
+      const trainer = state.trainerName || "담당자";
+      const review = getReview(member.id);
+      const baseText = review.finalText || member.fixedText || "";
+      const slots = parseScheduleText(baseText);
+      const range = weekRangeLabel();
+      const availability = member.availability ? `\n가능 범위: ${member.availability}` : "";
+      const note = member.type === "flexible" && !slots.length
+        ? `다음 주 PT 가능하신 요일/시간을 편하게 보내주세요.${availability}`
+        : `다음 주 PT 일정은 아래처럼 예정되어 있습니다.\n\n${slots.map((slot) => `- ${formatKoreanDate(slot.date)} ${slot.time}`).join("\n")}`;
+
+      if (state.messageTone === "short") {
+        return `${member.name}님 안녕하세요. ${trainer}입니다.\n${range} 일정 확인드립니다.\n\n${note}\n\n변경 없으시면 "확정", 변경 필요하시면 가능한 요일/시간 보내주세요.`;
+      }
+
+      if (state.messageTone === "formal") {
+        return `${member.name}님 안녕하세요, ${trainer}입니다.\n${range} 주간 PT 일정 확인차 연락드립니다.\n\n${note}\n\n예정대로 가능하시면 "확정"이라고 회신 부탁드립니다. 변경이 필요하시면 가능하신 요일과 시간을 보내주시면 조정해드리겠습니다.`;
+      }
+
+      return `${member.name}님 안녕하세요, ${trainer}입니다.\n다음 주 스케줄 먼저 확인드릴게요.\n\n${note}\n\n그대로 가능하시면 "확정"이라고 답장 부탁드리고, 변경 필요하시면 가능한 요일/시간 보내주세요.`;
+    }
+
+    function buildMessage(member) {
+      const saved = (getReview(member.id).customMessage || "").trim();
+      return saved || generateMessage(member);
+    }
+
+    function getBrojRows() {
+      const review = getWeekReview();
+      const rows = [];
+      getActiveMembers().forEach((member) => {
+        const item = review[member.id] || {};
+        if (item.status === "cancel") return;
+        const includeByStatus = ["confirmed", "adjusted"].includes(item.status) || state.includePendingBroj;
+        if (!includeByStatus) return;
+        const sourceText = item.finalText || member.fixedText || "";
+        const slots = parseScheduleText(sourceText);
+        if (!slots.length) {
+          rows.push({
+            memberId: member.id,
+            name: member.name,
+            status: item.status || "pending",
+            dateISO: "",
+            dateLabel: "",
+            day: "",
+            time: "",
+            endTime: "",
+            startMinutes: null,
+            endMinutes: null,
+            duration: memberDuration(member),
+            timeRange: "",
+            note: item.note || member.note || "",
+            needsCheck: true
+          });
+          return;
+        }
+        slots.forEach((slot) => {
+          const startMinutes = timeToMinutes(slot.time);
+          const duration = slotDuration(member, slot.dateISO, slot.time);
+          const endMinutes = startMinutes === null ? null : startMinutes + duration;
+          const endTime = endMinutes === null ? "" : minutesToTime(endMinutes);
+          rows.push({
+            memberId: member.id,
+            name: member.name,
+            status: item.status || "pending",
+            dateISO: slot.dateISO,
+            dateLabel: formatKoreanDate(slot.date, true),
+            day: slot.day,
+            time: slot.time,
+            endTime,
+            startMinutes,
+            endMinutes,
+            duration,
+            durationOverride: hasSlotDurationOverride(member, slot.dateISO, slot.time),
+            conflictIgnored: isSlotConflictIgnored(member, slot.dateISO, slot.time),
+            timeRange: displayTimeRange(slot.time, endTime),
+            note: item.note || member.note || "",
+            needsCheck: false
+          });
+        });
+      });
+
+      rows.forEach((row) => {
+        row.conflictWith = [];
+      });
+      rows.forEach((row, index) => {
+        if (row.needsCheck || !row.dateISO || !Number.isFinite(row.startMinutes) || !Number.isFinite(row.endMinutes)) return;
+        rows.slice(index + 1).forEach((other) => {
+          if (other.needsCheck || row.dateISO !== other.dateISO || !Number.isFinite(other.startMinutes) || !Number.isFinite(other.endMinutes)) return;
+          if (membersShareGroup(row.memberId, other.memberId)) return;
+          if (row.conflictIgnored || other.conflictIgnored) return;
+          if (!rangesOverlap(row.startMinutes, row.endMinutes, other.startMinutes, other.endMinutes)) return;
+          row.conflictWith.push(`${other.name} ${other.timeRange || other.time}`);
+          other.conflictWith.push(`${row.name} ${row.timeRange || row.time}`);
+        });
+      });
+      rows.forEach((row) => {
+        row.conflict = row.conflictWith.length > 0;
+        row.conflictNote = row.conflictWith.join(", ");
+      });
+      return rows.sort((a, b) => {
+        const dateDiff = String(a.dateISO).localeCompare(String(b.dateISO));
+        return dateDiff || String(a.time).localeCompare(String(b.time)) || a.name.localeCompare(b.name);
+      });
+    }
+
+    function metrics() {
+      const active = getActiveMembers();
+      const review = getWeekReview();
+      const rows = getBrojRows();
+      return {
+        total: active.length,
+        fixed: active.filter((member) => member.type === "fixed").length,
+        flexible: active.filter((member) => member.type !== "fixed").length,
+        confirmed: active.filter((member) => ["confirmed", "adjusted"].includes(review[member.id]?.status)).length,
+        pending: active.filter((member) => !["confirmed", "adjusted", "cancel"].includes(review[member.id]?.status)).length,
+        conflicts: rows.filter((row) => row.conflict).length
+      };
+    }
+
+    function render() {
+      getWeekReview();
+      document.getElementById("weekStart").value = state.weekStart;
+      document.getElementById("trainerName").value = state.trainerName || "";
+      document.getElementById("weekLabel").textContent = weekRangeLabel();
+      document.getElementById("weekSubLabel").textContent = ` · ${getActiveMembers().length}명 확인 대상`;
+      renderMetrics();
+      renderSyncPanel();
+      renderTabs();
+      if (activeTab === "members") renderMembers();
+      if (activeTab === "chat") renderChatWork();
+      if (activeTab === "messages") renderMessages();
+      if (activeTab === "responses") renderResponses();
+      if (activeTab === "broj") renderBroj();
+      if (activeTab === "history") renderHistory();
+    }
+
+    function renderTabs() {
+      document.querySelectorAll(".tab").forEach((button) => {
+        button.classList.toggle("active", button.dataset.tab === activeTab);
+      });
+      ["members", "chat", "messages", "responses", "broj", "history"].forEach((tab) => {
+        document.getElementById(`tab-${tab}`).classList.toggle("hidden", tab !== activeTab);
+      });
+    }
+
+    function renderMetrics() {
+      const item = metrics();
+      const data = [
+        ["확인 대상", item.total],
+        ["고정 회원", item.fixed],
+        ["유동/반고정", item.flexible],
+        ["확정/반영", item.confirmed],
+        ["확인 필요", item.pending, "warn"],
+        ["시간 충돌", item.conflicts, item.conflicts ? "danger" : ""]
+      ];
+      document.getElementById("metrics").innerHTML = data.map(([label, value, className]) => `
+        <div class="metric ${className || ""}">
+          <span>${label}</span>
+          <strong>${value}</strong>
+        </div>
+      `).join("");
+    }
+
+    function isSupabaseConfigured() {
+      return Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey && window.supabase?.createClient);
+    }
+
+    function renderSyncPanel() {
+      const panel = document.getElementById("syncPanel");
+      if (!panel) return;
+      if (!cloudState.configured) {
+        panel.innerHTML = `
+          <div class="sync-main">
+            <strong>로컬 저장</strong>
+            <span>Supabase 설정 전입니다. 이 기기 브라우저에만 저장됩니다.</span>
+          </div>
+          <div class="sync-actions">
+            <button id="openDeployGuide">설정 안내</button>
+          </div>
+        `;
+        return;
+      }
+
+      if (!cloudState.session) {
+        panel.innerHTML = `
+          <div class="sync-main">
+            <strong>클라우드 로그인</strong>
+            <span>${escapeHtml(cloudState.message || "로그인하면 여러 기기에서 같은 데이터를 사용합니다.")}</span>
+          </div>
+          <div class="sync-actions">
+            <label>
+              이메일
+              <input id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com">
+            </label>
+            <button id="sendMagicLink">이메일 링크</button>
+            <button id="signInGoogle" class="primary">Google 로그인</button>
+          </div>
+        `;
+        return;
+      }
+
+      panel.innerHTML = `
+        <div class="sync-main">
+          <strong>클라우드 동기화</strong>
+          <span>${escapeHtml(cloudState.email || "로그인됨")} · ${escapeHtml(cloudState.message || "연결됨")}</span>
+        </div>
+        <div class="sync-actions">
+          <button id="saveCloudNow" ${cloudState.busy ? "disabled" : ""}>지금 저장</button>
+          <button id="loadCloudNow" ${cloudState.busy ? "disabled" : ""}>불러오기</button>
+          <button id="signOutCloud">로그아웃</button>
+        </div>
+      `;
+    }
+
+    function setCloudMessage(message, status = cloudState.status) {
+      cloudState.message = message;
+      cloudState.status = status;
+      renderSyncPanel();
+    }
+
+    function queueCloudSave() {
+      if (!cloudState.configured || !cloudState.session || cloudState.applyingRemote) return;
+      window.clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = window.setTimeout(() => saveCloudStateNow({ silent: true }), 900);
+    }
+
+    function safeRedirectUrl() {
+      return window.location.href.split("#")[0];
+    }
+
+    async function initCloudSync() {
+      cloudState.configured = isSupabaseConfigured();
+      if (!cloudState.configured) {
+        renderSyncPanel();
+        return;
+      }
+      try {
+        supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+        await handleCloudSession(data.session, { loadRemote: true });
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+          await handleCloudSession(session, { loadRemote: event === "SIGNED_IN" || event === "INITIAL_SESSION" });
+        });
+      } catch (error) {
+        console.warn(error);
+        cloudState.configured = false;
+        setCloudMessage("Supabase 연결 설정을 확인해주세요.", "error");
+      }
+    }
+
+    async function handleCloudSession(session, options = {}) {
+      cloudState.session = session || null;
+      cloudState.email = session?.user?.email || "";
+      if (!session) {
+        setCloudMessage("로그인 대기 중", "signed-out");
+        return;
+      }
+      setCloudMessage("클라우드 확인 중", "syncing");
+      if (options.loadRemote) await loadCloudState({ silent: true });
+    }
+
+    async function cloudRecordQuery() {
+      if (!supabaseClient || !cloudState.session?.user?.id) return null;
+      const { data, error } = await supabaseClient
+        .from(SUPABASE_CONFIG.table)
+        .select("app_state, updated_at")
+        .eq("user_id", cloudState.session.user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    async function loadCloudState(options = {}) {
+      if (!supabaseClient || !cloudState.session) return;
+      cloudState.busy = true;
+      renderSyncPanel();
+      try {
+        const record = await cloudRecordQuery();
+        if (record?.app_state) {
+          cloudState.applyingRemote = true;
+          state = normalizeStateObject(record.app_state);
+          cloudState.lastUpdatedAt = record.updated_at || "";
+          saveState({ skipCloud: true });
+          cloudState.applyingRemote = false;
+          render();
+          if (!options.silent) showToast("클라우드 데이터를 불러왔습니다.");
+          setCloudMessage(`불러옴 ${formatSyncTime(record.updated_at)}`, "synced");
+        } else {
+          await saveCloudStateNow({ silent: true });
+          setCloudMessage("첫 클라우드 저장 완료", "synced");
+        }
+      } catch (error) {
+        console.warn(error);
+        cloudState.applyingRemote = false;
+        setCloudMessage("클라우드 불러오기에 실패했습니다.", "error");
+        if (!options.silent) showToast("클라우드 불러오기에 실패했습니다.");
+      } finally {
+        cloudState.busy = false;
+        renderSyncPanel();
+      }
+    }
+
+    async function saveCloudStateNow(options = {}) {
+      if (!supabaseClient || !cloudState.session?.user?.id) return;
+      cloudState.busy = true;
+      renderSyncPanel();
+      try {
+        const payload = {
+          user_id: cloudState.session.user.id,
+          app_state: state,
+          updated_at: new Date().toISOString()
+        };
+        const { data, error } = await supabaseClient
+          .from(SUPABASE_CONFIG.table)
+          .upsert(payload, { onConflict: "user_id" })
+          .select("updated_at")
+          .single();
+        if (error) throw error;
+        cloudState.lastUpdatedAt = data?.updated_at || payload.updated_at;
+        setCloudMessage(`저장됨 ${formatSyncTime(cloudState.lastUpdatedAt)}`, "synced");
+        if (!options.silent) showToast("클라우드에 저장했습니다.");
+      } catch (error) {
+        console.warn(error);
+        setCloudMessage("클라우드 저장에 실패했습니다.", "error");
+        if (!options.silent) showToast("클라우드 저장에 실패했습니다.");
+      } finally {
+        cloudState.busy = false;
+        renderSyncPanel();
+      }
+    }
+
+    function formatSyncTime(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    async function signInWithGoogle() {
+      if (!supabaseClient) return;
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: safeRedirectUrl() }
+      });
+      if (error) {
+        console.warn(error);
+        showToast("Google 로그인을 시작하지 못했습니다.");
+      }
+    }
+
+    async function sendEmailLoginLink() {
+      if (!supabaseClient) return;
+      const email = document.getElementById("loginEmail")?.value.trim();
+      if (!email) {
+        showToast("이메일을 입력해주세요.");
+        return;
+      }
+      const { error } = await supabaseClient.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: safeRedirectUrl() }
+      });
+      if (error) {
+        console.warn(error);
+        showToast("이메일 로그인 링크 발송에 실패했습니다.");
+        return;
+      }
+      setCloudMessage("이메일로 로그인 링크를 보냈습니다.", "signed-out");
+      showToast("이메일 로그인 링크를 보냈습니다.");
+    }
+
+    async function signOutCloud() {
+      if (!supabaseClient) return;
+      await supabaseClient.auth.signOut();
+      cloudState.session = null;
+      cloudState.email = "";
+      setCloudMessage("로그아웃됨", "signed-out");
+    }
+
+    function renderMembers() {
+      const query = (state.memberSearch || "").trim().toLowerCase();
+      const filtered = state.members.filter((member) => !query || member.name.toLowerCase().includes(query));
+      document.getElementById("tab-members").innerHTML = `
+        <div class="panel-head">
+          <div>
+            <h2>회원 기본표</h2>
+            <p class="subtle">고정 일정 예시: 월 19:00, 목 20:00 · 확보분은 시간 겹침 계산에 사용됩니다.</p>
+          </div>
+          <div class="panel-actions">
+            <button id="resetToRealMembers">실회원 명단</button>
+            <button id="downloadMemberTemplate">CSV 양식</button>
+            <button id="importMembersButton">CSV 가져오기</button>
+            <button id="exportMembersCsv">회원 CSV</button>
+            <button class="primary" id="addMember"><span aria-hidden="true">+</span>회원 추가</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input class="search" id="memberSearch" type="search" placeholder="회원 검색" value="${escapeHtml(state.memberSearch || "")}">
+          <span class="subtle">비활성 회원은 이번 주 확인 대상에서 빠집니다.</span>
+          <input id="importMembersInput" class="hidden" type="file" accept=".csv,text/csv">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>활성</th>
+                <th>회원명</th>
+                <th>유형</th>
+                <th>고정 일정</th>
+                <th>가능 범위</th>
+                <th>공유그룹</th>
+                <th>확보</th>
+                <th>메모</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.length ? filtered.map(renderMemberRow).join("") : `<tr><td colspan="9" class="empty">회원이 없습니다.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderMemberRow(member) {
+      return `
+        <tr>
+          <td class="compact">
+            <input type="checkbox" data-member-id="${member.id}" data-member-field="active" ${member.active ? "checked" : ""}>
+          </td>
+          <td>
+            <input type="text" data-member-id="${member.id}" data-member-field="name" value="${escapeHtml(member.name)}">
+          </td>
+          <td>
+            <select data-member-id="${member.id}" data-member-field="type">
+              ${Object.entries(TYPE_LABELS).map(([value, label]) => `<option value="${value}" ${member.type === value ? "selected" : ""}>${label}</option>`).join("")}
+            </select>
+          </td>
+          <td class="wide">
+            <input type="text" data-member-id="${member.id}" data-member-field="fixedText" value="${escapeHtml(member.fixedText || "")}" placeholder="월 19:00, 목 20:00">
+          </td>
+          <td class="wide">
+            <input type="text" data-member-id="${member.id}" data-member-field="availability" value="${escapeHtml(member.availability || "")}" placeholder="월/수 저녁, 토 오전">
+          </td>
+          <td>
+            <input type="text" data-member-id="${member.id}" data-member-field="groupId" value="${escapeHtml(member.groupId || "")}" placeholder="부부/공유" title="같은 이름을 적은 회원끼리 슬롯을 공유해 서로 겹침 검사에서 제외됩니다">
+          </td>
+          <td>
+            <input type="number" min="60" step="5" data-member-id="${member.id}" data-member-field="duration" value="${escapeHtml(memberDuration(member))}">
+          </td>
+          <td class="wide">
+            <input type="text" data-member-id="${member.id}" data-member-field="note" value="${escapeHtml(member.note || "")}">
+          </td>
+          <td>
+            <div class="row-actions">
+              <button class="icon-only" data-action="duplicate-member" data-id="${member.id}" title="복제">+</button>
+              <button class="icon-only danger" data-action="delete-member" data-id="${member.id}" title="삭제">x</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    function getChatMember() {
+      const activeMembers = getActiveMembers();
+      if (!activeMembers.length) return null;
+      const selected = activeMembers.find((member) => member.id === state.chatMemberId) || activeMembers[0];
+      state.chatMemberId = selected.id;
+      return selected;
+    }
+
+    function responseSortValue(member) {
+      const status = getReview(member.id).status || "pending";
+      const order = { change: 0, pending: 1, adjusted: 2, confirmed: 3, cancel: 4 };
+      return order[status] ?? 5;
+    }
+
+    function displayTime(time) {
+      const [hourText, minuteText] = String(time || "").split(":");
+      const hour = Number(hourText);
+      const minute = Number(minuteText || 0);
+      if (Number.isNaN(hour)) return time || "";
+      const meridiem = hour < 12 ? "오전" : "오후";
+      const displayHour = hour % 12 || 12;
+      return minute ? `${meridiem}${displayHour}시${minute}분` : `${meridiem}${displayHour}시`;
+    }
+
+    function displayTimeRange(startTime, endTime) {
+      return startTime && endTime ? `${displayTime(startTime)}-${displayTime(endTime)}` : "";
+    }
+
+    function scheduleLinesForMessage(text) {
+      const slots = parseScheduleText(text);
+      if (!slots.length) return (text || "").trim();
+      return slots.map((slot) => `${slot.day} ${displayTime(slot.time)}`).join("\n");
+    }
+
+    function generateChatDraft(member) {
+      if (!member) return "";
+      const review = getReview(member.id);
+      const candidate = (state.chatCandidateText || review.finalText || member.fixedText || "").trim();
+      const scheduleLines = scheduleLinesForMessage(candidate);
+      const availability = member.availability ? `\n가능하신 범위는 ${member.availability}로 알고있어요.` : "";
+
+      if (state.chatMode === "ask") {
+        return `${member.name}님 이번 오는 평일 스케줄 가능하신 요일/시간 나오시면 알려주세용${availability}`;
+      }
+
+      if (state.chatMode === "propose") {
+        return `${member.name}님 ${scheduleLines || "이번 주 가능하신 시간"} 가능하실까요?`;
+      }
+
+      if (state.chatMode === "followup") {
+        return `${member.name}님 다음 주 PT 가능 요일/시간 나오시면 편하실 때 알려주세용`;
+      }
+
+      if (state.chatMode === "thanks") {
+        return scheduleLines
+          ? `네 감사합니다!\n그럼\n${scheduleLines}\n이렇게 잡아두겠습니다.`
+          : "네 감사합니다!";
+      }
+
+      return scheduleLines
+        ? `네 그럼\n${scheduleLines}\n이렇게 잡아두겠습니다!`
+        : `${member.name}님 스케줄 확인되면 바로 잡아두겠습니다!`;
+    }
+
+    function buildChatDraft(member) {
+      if (!member) return "";
+      const saved = (getReview(member.id).customMessage || "").trim();
+      return saved || generateChatDraft(member);
+    }
+
+    function inferChatSlotTime(slot, member) {
+      if (!member || /오전|오후/.test(slot.raw || "")) return slot.time;
+      const startMinutes = timeToMinutes(slot.time);
+      if (startMinutes === null) return slot.time;
+      const hour = Math.floor(startMinutes / 60);
+      if (hour < 1 || hour > 7) return slot.time;
+      const profile = `${member.availability || ""} ${member.note || ""} ${member.fixedText || ""}`;
+      const hasAfternoonSignal = /오후|저녁|퇴근/.test(profile) || /(?:1[3-9]|2[0-3]):/.test(profile);
+      const hasMorningSignal = /오전|새벽/.test(profile) || /\b0?[5-9]:/.test(profile);
+      if (hasAfternoonSignal && !hasMorningSignal) return minutesToTime(startMinutes + 12 * 60);
+      return slot.time;
+    }
+
+    function extractScheduleCandidates(text, member = getChatMember()) {
+      const weekStart = parseISODate(state.weekStart);
+      const weekEnd = addDays(weekStart, 6);
+      const seen = new Set();
+      return parseScheduleText(text).filter((slot) => slot.date >= weekStart && slot.date <= weekEnd).map((slot) => {
+        const time = inferChatSlotTime(slot, member);
+        return {
+          key: `${slot.day} ${time}`,
+          label: `${formatKoreanDate(slot.date)} ${displayTime(time)}`,
+          scheduleText: `${slot.day} ${time}`,
+          dateISO: slot.dateISO,
+          time
+        };
+      }).filter((candidate) => {
+        if (seen.has(candidate.key)) return false;
+        seen.add(candidate.key);
+        return true;
+      }).sort((a, b) => {
+        const dateDiff = a.dateISO.localeCompare(b.dateISO);
+        return dateDiff || a.time.localeCompare(b.time);
+      });
+    }
+
+    function buildScheduleTextFromPaste(text = state.chatPasteText) {
+      return extractScheduleCandidates(text, getChatMember()).map((candidate) => candidate.scheduleText).join(", ");
+    }
+
+    function renderParsedScheduleResult(candidates) {
+      const parsedText = buildScheduleTextFromPaste();
+      if (!parsedText) {
+        return `<div class="parsed-result"><strong>등록 내용</strong><span class="subtle">회원 답변에서 이번 주 일정 시간을 찾지 못했습니다.</span></div>`;
+      }
+      return `
+        <div class="parsed-result">
+          <strong>등록 내용 · ${candidates.length}개</strong>
+          <code>${escapeHtml(parsedText)}</code>
+        </div>
+      `;
+    }
+
+    function getComparisonRows(excludeMemberId = "") {
+      const review = getWeekReview();
+      const rows = [];
+      getActiveMembers().forEach((member) => {
+        if (member.id === excludeMemberId) return;
+        const item = review[member.id] || {};
+        if (item.status === "cancel") return;
+        const sourceText = item.finalText || member.fixedText || "";
+        parseScheduleText(sourceText).forEach((slot) => {
+          const startMinutes = timeToMinutes(slot.time);
+          const duration = slotDuration(member, slot.dateISO, slot.time);
+          const endMinutes = startMinutes === null ? null : startMinutes + duration;
+          rows.push({
+            memberId: member.id,
+            name: member.name,
+            dateISO: slot.dateISO,
+            day: slot.day,
+            time: slot.time,
+            endTime: endMinutes === null ? "" : minutesToTime(endMinutes),
+            startMinutes,
+            endMinutes,
+            duration,
+            durationOverride: hasSlotDurationOverride(member, slot.dateISO, slot.time),
+            conflictIgnored: isSlotConflictIgnored(member, slot.dateISO, slot.time),
+            status: item.status || "pending"
+          });
+        });
+      });
+      return rows;
+    }
+
+    function getCandidateConflictChecks(member) {
+      if (!member) return [];
+      const candidateText = (state.chatCandidateText || getReview(member.id).finalText || member.fixedText || "").trim();
+      const comparisonRows = getComparisonRows(member.id);
+      return parseScheduleText(candidateText).map((slot) => {
+        const startMinutes = timeToMinutes(slot.time);
+        const duration = slotDuration(member, slot.dateISO, slot.time);
+        const endMinutes = startMinutes === null ? null : startMinutes + duration;
+        const ignored = isSlotConflictIgnored(member, slot.dateISO, slot.time);
+        const conflicts = ignored ? [] : comparisonRows.filter((row) => row.dateISO === slot.dateISO && !row.conflictIgnored && !membersShareGroup(member.id, row.memberId) && rangesOverlap(startMinutes, endMinutes, row.startMinutes, row.endMinutes));
+        return {
+          label: `${formatKoreanDate(slot.date)} ${displayTimeRange(slot.time, minutesToTime(endMinutes))}`,
+          key: slotOverrideKey(slot.dateISO, slot.time),
+          duration,
+          durationOverride: hasSlotDurationOverride(member, slot.dateISO, slot.time),
+          conflictIgnored: ignored,
+          conflicts
+        };
+      });
+    }
+
+    function renderCandidateConflictPreview(member) {
+      const checks = getCandidateConflictChecks(member);
+      if (!checks.length) return `<p class="subtle">제안/최종 일정에 시간을 넣으면 겹침 여부가 표시됩니다.</p>`;
+      return checks.map((check) => {
+        if (!check.conflicts.length) {
+          return `<div class="status-chip adjusted">${escapeHtml(check.label)} · ${check.durationOverride ? "예외 " : ""}${check.duration}분 · ${check.conflictIgnored ? "경고 숨김" : "겹침 없음"}</div>`;
+        }
+        const details = check.conflicts.map((row) => `${row.name} ${displayTimeRange(row.time, row.endTime)} (${row.duration}분)`).join(", ");
+        return `<div class="conflict-detail">${escapeHtml(check.label)} · ${check.durationOverride ? "예외 " : ""}${check.duration}분 · ${escapeHtml(details)} 겹침</div>`;
+      }).join("");
+    }
+
+    function renderDurationOverrideControls(member) {
+      if (!member) return "";
+      const candidateText = (state.chatCandidateText || getReview(member.id).finalText || member.fixedText || "").trim();
+      const slots = parseScheduleText(candidateText);
+      if (!slots.length) {
+        return `
+          <div class="mini-panel">
+            <div>
+              <h3>이번주 예외 확보분</h3>
+              <p class="subtle">제안/최종 일정에 시간이 들어가면 이 주차만 수업 시간을 줄이거나 늘릴 수 있습니다.</p>
+            </div>
+          </div>
+        `;
+      }
+      const base = memberDuration(member);
+      return `
+        <div class="mini-panel">
+          <div class="mini-panel-head">
+            <div>
+              <h3>이번주 예외 확보분</h3>
+              <p class="subtle">기본 ${base}분 대신 특정 일정만 이번 주에 다르게 계산합니다.</p>
+            </div>
+          </div>
+          <div class="override-grid">
+            ${slots.map((slot) => {
+              const key = slotOverrideKey(slot.dateISO, slot.time);
+              const current = slotDuration(member, slot.dateISO, slot.time);
+              const isOverride = hasSlotDurationOverride(member, slot.dateISO, slot.time);
+              const isIgnored = isSlotConflictIgnored(member, slot.dateISO, slot.time);
+              return `
+                <div class="override-item">
+                  <div class="override-item-top">
+                    <strong>${escapeHtml(formatKoreanDate(slot.date))} ${escapeHtml(displayTime(slot.time))}</strong>
+                    ${isOverride ? `<span class="status-chip adjusted">예외</span>` : `<small>기본</small>`}
+                  </div>
+                  <label>
+                    확보분
+                    <input type="number" min="30" step="5" data-duration-override-id="${member.id}" data-duration-key="${escapeHtml(key)}" value="${escapeHtml(current)}">
+                  </label>
+                  <label class="inline-check">
+                    <input type="checkbox" data-conflict-ignore-id="${member.id}" data-conflict-key="${escapeHtml(key)}" ${isIgnored ? "checked" : ""}>
+                    이번주 겹침 경고 숨김
+                  </label>
+                  <button data-action="reset-duration-override" data-id="${member.id}" data-key="${escapeHtml(key)}">기본 ${base}분</button>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderChatWork() {
+      const activeMembers = getActiveMembers().slice().sort((a, b) => responseSortValue(a) - responseSortValue(b) || a.name.localeCompare(b.name));
+      const selected = getChatMember();
+      const review = selected ? getReview(selected.id) : null;
+      const candidates = extractScheduleCandidates(state.chatPasteText || "");
+      document.getElementById("tab-chat").innerHTML = `
+        <div class="panel-head">
+          <div>
+            <h2>카톡 작업</h2>
+            <p class="subtle">회원 선택, 답장 문구 복사, 최종 일정 반영을 한 화면에서 처리합니다.</p>
+          </div>
+          <div class="panel-actions">
+            <button data-action="copy-chat-draft" class="primary">문구 복사</button>
+            <button data-action="save-chat-draft">문구 저장</button>
+            <button data-action="apply-chat-final">최종일정 반영</button>
+          </div>
+        </div>
+        ${selected ? `
+          <div class="chat-work">
+            <aside class="chat-sidebar">
+              ${activeMembers.map((member) => renderChatMemberButton(member)).join("")}
+            </aside>
+            <div class="chat-main">
+              <div class="mini-panel">
+                <div class="mini-panel-head">
+                  <div>
+                    <h3>${escapeHtml(selected.name)}</h3>
+                    <p class="subtle">${escapeHtml(selected.availability || selected.note || "가능 범위 미입력")}</p>
+                  </div>
+                  <span class="status-chip ${review.status || "pending"}">${STATUS_LABELS[review.status || "pending"]}</span>
+                  ${review.customMessage ? `<span class="status-chip adjusted">저장문구</span>` : ""}
+                </div>
+                <div class="chat-compose-grid">
+                  <label>
+                    회원
+                    <select id="chatMemberSelect">
+                      ${activeMembers.map((member) => `<option value="${member.id}" ${member.id === selected.id ? "selected" : ""}>${escapeHtml(member.name)}</option>`).join("")}
+                    </select>
+                  </label>
+                  <label>
+                    작업
+                    <select id="chatMode">
+                      <option value="confirm" ${state.chatMode === "confirm" ? "selected" : ""}>최종 확정</option>
+                      <option value="propose" ${state.chatMode === "propose" ? "selected" : ""}>시간 제안</option>
+                      <option value="ask" ${state.chatMode === "ask" ? "selected" : ""}>가능시간 질문</option>
+                      <option value="followup" ${state.chatMode === "followup" ? "selected" : ""}>무응답 재확인</option>
+                      <option value="thanks" ${state.chatMode === "thanks" ? "selected" : ""}>감사 마무리</option>
+                    </select>
+                  </label>
+                  <label>
+                    상태
+                    <select data-review-id="${selected.id}" data-review-field="status">
+                      ${Object.entries(STATUS_LABELS).map(([value, label]) => `<option value="${value}" ${review.status === value ? "selected" : ""}>${label}</option>`).join("")}
+                    </select>
+                  </label>
+                  <label class="wide-field">
+                    제안/최종 일정
+                    <input id="chatCandidateText" type="text" value="${escapeHtml(state.chatCandidateText || review.finalText || selected.fixedText || "")}" placeholder="예: 월 18:00, 수 10:10, 금 10:10">
+                  </label>
+                </div>
+                <div class="candidate-list" id="chatConflictPreview">
+                  ${renderCandidateConflictPreview(selected)}
+                </div>
+                <div id="durationOverrideControls">
+                  ${renderDurationOverrideControls(selected)}
+                </div>
+                <textarea id="chatDraft" class="chat-draft">${escapeHtml(buildChatDraft(selected))}</textarea>
+                <div class="panel-actions">
+                  <button data-action="copy-chat-draft" class="primary">문구 복사</button>
+                  <button data-action="save-chat-draft">문구 저장</button>
+                  <button data-action="reset-chat-draft">기본문구</button>
+                  <button data-action="apply-chat-final">최종일정 반영</button>
+                  <button data-action="set-status" data-id="${selected.id}" data-status="change">변경요청</button>
+                  <button data-action="set-status" data-id="${selected.id}" data-status="pending">답변대기</button>
+                  <button data-action="set-status" data-id="${selected.id}" data-status="cancel">취소</button>
+                </div>
+              </div>
+              <div class="mini-panel">
+                <div class="mini-panel-head">
+                  <div>
+                    <h3>회원 답변에서 일정 만들기</h3>
+                    <p class="subtle">회원이 보낸 일정 문장을 붙여넣으면 등록 내용을 자동으로 만듭니다.</p>
+                  </div>
+                  <div class="panel-actions">
+                    <button id="parseChatReply" class="primary">답변에서 일정 만들기</button>
+                    <button id="refreshChatCandidates">후보 찾기</button>
+                  </div>
+                </div>
+                <textarea id="chatPasteText" placeholder="회원이 보낸 답변을 붙여넣기. 예: 30일 오후 1시 / 2일 오후 2시 / 금요일 오후1시30분 가능합니다.">${escapeHtml(state.chatPasteText || "")}</textarea>
+                <div id="parsedScheduleResult">
+                  ${renderParsedScheduleResult(candidates)}
+                </div>
+                <div class="candidate-list" id="chatCandidateList">
+                  ${candidates.length ? candidates.map((candidate) => `<button class="candidate-chip" data-action="use-candidate" data-value="${escapeHtml(candidate.scheduleText)}">${escapeHtml(candidate.label)}</button>`).join("") : `<span class="subtle">이번 주 날짜/요일과 시간이 잡히면 여기에 후보가 표시됩니다.</span>`}
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : `<div class="empty">활성 회원이 없습니다.</div>`}
+      `;
+    }
+
+    function renderChatMemberButton(member) {
+      const review = getReview(member.id);
+      const isActive = member.id === state.chatMemberId;
+      const schedule = review.finalText || member.fixedText || member.availability || "일정 확인 필요";
+      return `
+        <button class="chat-member-button ${isActive ? "active" : ""}" data-action="select-chat-member" data-id="${member.id}">
+          <span class="chat-member-main">
+            <strong>${escapeHtml(member.name)}</strong>
+            <span>${escapeHtml(schedule)}</span>
+          </span>
+          <span class="status-chip ${review.status || "pending"}">${STATUS_LABELS[review.status || "pending"]}</span>
+        </button>
+      `;
+    }
+
+    function renderMessages() {
+      const activeMembers = getActiveMembers();
+      document.getElementById("tab-messages").innerHTML = `
+        <div class="panel-head">
+          <div>
+            <h2>카톡 문구</h2>
+            <p class="subtle">회원별 문구를 복사해서 카톡에 붙여넣습니다.</p>
+          </div>
+          <div class="panel-actions">
+            <label>
+              문구 톤
+              <select id="messageTone">
+                <option value="warm" ${state.messageTone === "warm" ? "selected" : ""}>부드럽게</option>
+                <option value="short" ${state.messageTone === "short" ? "selected" : ""}>짧게</option>
+                <option value="formal" ${state.messageTone === "formal" ? "selected" : ""}>정중하게</option>
+              </select>
+            </label>
+            <button id="copyAllMessages">전체 복사</button>
+            <button id="exportMessagesCsv">문구 CSV</button>
+          </div>
+        </div>
+        ${activeMembers.length ? `<div class="message-grid">${activeMembers.map(renderMessageCard).join("")}</div>` : `<div class="empty">활성 회원이 없습니다.</div>`}
+      `;
+    }
+
+    function renderMessageCard(member) {
+      const review = getReview(member.id);
+      const message = buildMessage(member);
+      const baseText = review.finalText || member.fixedText || "";
+      return `
+        <article class="message-card">
+          <div class="card-top">
+            <div>
+              <h3>${escapeHtml(member.name)}</h3>
+              <p class="subtle">${escapeHtml(scheduleSummary(baseText))}</p>
+            </div>
+            <div class="panel-actions">
+              ${review.customMessage ? `<span class="status-chip adjusted">저장문구</span>` : ""}
+              <span class="status-chip ${review.status || "pending"}">${STATUS_LABELS[review.status || "pending"]}</span>
+            </div>
+          </div>
+          <textarea id="message-${member.id}">${escapeHtml(message)}</textarea>
+          <div class="panel-actions">
+            <button class="primary" data-action="copy-message" data-id="${member.id}">복사</button>
+            <button data-action="save-message" data-id="${member.id}">문구 저장</button>
+            <button data-action="reset-message" data-id="${member.id}">기본문구</button>
+            <button data-action="set-status" data-id="${member.id}" data-status="confirmed">확정처리</button>
+            <button data-action="set-status" data-id="${member.id}" data-status="change">변경요청</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderResponses() {
+      const activeMembers = getActiveMembers();
+      const needsMembers = activeMembers.filter((member) => !isResponseDone(member));
+      const doneMembers = activeMembers.filter((member) => isResponseDone(member));
+      document.getElementById("tab-responses").innerHTML = `
+        <div class="panel-head">
+          <div>
+            <h2>응답 정리</h2>
+            <p class="subtle">최종 일정은 브로제이 등록 리스트에 그대로 반영됩니다.</p>
+          </div>
+          <div class="panel-actions">
+            <button id="markFixedConfirmed">고정회원 확정</button>
+            <button id="resetWeekResponses">이번 주 초기화</button>
+          </div>
+        </div>
+        <div class="response-overview">
+          <div class="response-pill needs">
+            <span>확인 필요</span>
+            <strong>${needsMembers.length}</strong>
+          </div>
+          <div class="response-pill done">
+            <span>확인 완료</span>
+            <strong>${doneMembers.length}</strong>
+          </div>
+        </div>
+        ${activeMembers.length ? `
+          ${renderResponseSection("확인 필요", "답변대기/변경요청 상태라 아직 처리해야 하는 회원", needsMembers, "needs")}
+          ${renderResponseSection("확인 완료", "확정/변경반영/취소 상태로 정리된 회원", doneMembers, "done")}
+        ` : `<div class="empty">활성 회원이 없습니다.</div>`}
+      `;
+    }
+
+    function isResponseDone(member) {
+      const status = getReview(member.id).status || "pending";
+      return ["confirmed", "adjusted", "cancel"].includes(status);
+    }
+
+    function renderResponseSection(title, subtitle, members, className) {
+      return `
+        <section class="response-section">
+          <div class="response-section-head ${className}">
+            <h3>${title}</h3>
+            <span>${subtitle} · ${members.length}명</span>
+          </div>
+          <div class="table-wrap">
+            ${renderResponseTable(members, className)}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderResponseTable(members, className) {
+      if (!members.length) return `<div class="empty">해당 회원이 없습니다.</div>`;
+      return `
+          <table>
+            <thead>
+              <tr>
+                <th>회원명</th>
+                <th>기본 일정</th>
+                <th>상태</th>
+                <th>요청 내용</th>
+                <th>최종 일정</th>
+                <th>등록 메모</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${members.map((member) => renderResponseRow(member, className)).join("")}
+            </tbody>
+          </table>
+      `;
+    }
+
+    function renderResponseRow(member, className = "") {
+      const review = getReview(member.id);
+      return `
+        <tr class="response-row ${className}">
+          <td><strong>${escapeHtml(member.name)}</strong><br><span class="subtle">${TYPE_LABELS[member.type] || ""}</span></td>
+          <td class="wide">${escapeHtml(scheduleSummary(member.fixedText || ""))}</td>
+          <td>
+            <select data-review-id="${member.id}" data-review-field="status">
+              ${Object.entries(STATUS_LABELS).map(([value, label]) => `<option value="${value}" ${review.status === value ? "selected" : ""}>${label}</option>`).join("")}
+            </select>
+          </td>
+          <td class="wide">
+            <input type="text" data-review-id="${member.id}" data-review-field="request" value="${escapeHtml(review.request || "")}" placeholder="회원 답변">
+          </td>
+          <td class="wide">
+            <input type="text" data-review-id="${member.id}" data-review-field="finalText" value="${escapeHtml(review.finalText || "")}" placeholder="월 19:00, 목 20:00">
+          </td>
+          <td class="wide">
+            <input type="text" data-review-id="${member.id}" data-review-field="note" value="${escapeHtml(review.note || "")}" placeholder="브로제이 등록 메모">
+          </td>
+          <td>
+            <button data-action="reset-final" data-id="${member.id}">기본값</button>
+          </td>
+        </tr>
+      `;
+    }
+
+    function renderBroj() {
+      const rows = getBrojRows();
+      document.getElementById("tab-broj").innerHTML = `
+        <div class="panel-head">
+          <div>
+            <h2>브로제이 등록 리스트</h2>
+            <p class="subtle">확정/변경반영 상태만 기본 표시됩니다.</p>
+          </div>
+          <div class="panel-actions">
+            <label class="inline-check">
+              <input id="includePendingBroj" type="checkbox" ${state.includePendingBroj ? "checked" : ""}>
+              확인 필요 포함
+            </label>
+            <button id="copyBrojRows">표 복사</button>
+            <button id="exportBrojCsv">브로제이 CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>상태</th>
+                <th>회원명</th>
+                <th>날짜</th>
+                <th>요일</th>
+                <th>시작</th>
+                <th>확보</th>
+                <th>사용구간</th>
+                <th>겹침</th>
+                <th>메모</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.length ? rows.map(renderBrojRow).join("") : `<tr><td colspan="9" class="empty">브로제이에 등록할 확정 일정이 없습니다.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderBrojRow(row) {
+      const statusLabel = row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]);
+      const statusClass = row.conflict ? "cancel" : row.status;
+      return `
+        <tr class="${row.conflict ? "conflict-row" : ""}">
+          <td><span class="status-chip ${statusClass}">${escapeHtml(statusLabel)}</span></td>
+          <td><strong>${escapeHtml(row.name)}</strong></td>
+          <td class="mono">${escapeHtml(row.dateLabel)}</td>
+          <td>${escapeHtml(row.day)}</td>
+          <td class="mono">${escapeHtml(row.time)}</td>
+          <td>${row.durationOverride ? `<span class="status-chip adjusted">예외 ${escapeHtml(row.duration)}분</span>` : `${escapeHtml(row.duration)}분`}</td>
+          <td>${escapeHtml(row.timeRange || "")}</td>
+          <td>${row.conflict ? `<div class="conflict-detail">${escapeHtml(row.conflictNote)}</div>` : row.conflictIgnored ? `<span class="status-chip adjusted">경고 숨김</span>` : ""}</td>
+          <td>${escapeHtml(row.note || "")}</td>
+        </tr>
+      `;
+    }
+
+    function getHistoryWeeks() {
+      const weeks = Object.keys(state.reviews || {});
+      if (!weeks.includes(state.weekStart)) weeks.push(state.weekStart);
+      return weeks.sort((a, b) => b.localeCompare(a));
+    }
+
+    function getWeekLabel(weekStart) {
+      const start = parseISODate(weekStart);
+      const end = addDays(start, 6);
+      return `${formatKoreanDate(start, true)} - ${formatKoreanDate(end)}`;
+    }
+
+    function getHistoryMembers(weekStart) {
+      const weekReview = state.reviews?.[weekStart] || {};
+      return state.members.filter((member) => member.active || weekReview[member.id]);
+    }
+
+    function getHistoryRows(weekStart = state.historyWeek || state.weekStart) {
+      const weekReview = state.reviews?.[weekStart] || {};
+      return getHistoryMembers(weekStart).map((member) => {
+        const review = weekReview[member.id] || {};
+        const durationOverrideCount = Object.keys(review.durationOverrides || {}).length;
+        const conflictIgnoreCount = Object.keys(review.conflictIgnores || {}).length;
+        const status = review.status || "pending";
+        return {
+          member,
+          status,
+          statusLabel: STATUS_LABELS[status] || status,
+          request: review.request || "",
+          finalText: review.finalText || member.fixedText || "",
+          note: review.note || "",
+          customMessage: review.customMessage || "",
+          durationOverrideCount,
+          conflictIgnoreCount
+        };
+      }).sort((a, b) => {
+        const order = { change: 0, pending: 1, adjusted: 2, confirmed: 3, cancel: 4 };
+        return (order[a.status] ?? 5) - (order[b.status] ?? 5) || a.member.name.localeCompare(b.member.name);
+      });
+    }
+
+    function historyStatusCounts(weekStart = state.historyWeek || state.weekStart) {
+      const rows = getHistoryRows(weekStart);
+      const doneStatuses = ["confirmed", "adjusted", "cancel"];
+      return {
+        total: rows.length,
+        done: rows.filter((row) => doneStatuses.includes(row.status)).length,
+        needs: rows.filter((row) => !doneStatuses.includes(row.status)).length,
+        confirmed: rows.filter((row) => row.status === "confirmed").length,
+        adjusted: rows.filter((row) => row.status === "adjusted").length,
+        cancel: rows.filter((row) => row.status === "cancel").length
+      };
+    }
+
+    function renderHistory() {
+      const weeks = getHistoryWeeks();
+      if (!weeks.includes(state.historyWeek)) state.historyWeek = weeks[0] || state.weekStart;
+      const counts = historyStatusCounts(state.historyWeek);
+      const rows = getHistoryRows(state.historyWeek);
+      document.getElementById("tab-history").innerHTML = `
+        <div class="panel-head">
+          <div>
+            <h2>주차 이력</h2>
+            <p class="subtle">주차별 응답정리, 저장문구, 이번주 예외 확보분 기록을 확인합니다.</p>
+          </div>
+          <div class="panel-actions">
+            <label>
+              주차
+              <select id="historyWeekSelect">
+                ${weeks.map((week) => `<option value="${week}" ${week === state.historyWeek ? "selected" : ""}>${escapeHtml(getWeekLabel(week))}</option>`).join("")}
+              </select>
+            </label>
+            <button id="copyHistoryRows">이력 복사</button>
+            <button id="exportHistoryCsv">이력 CSV</button>
+          </div>
+        </div>
+        <div class="response-overview">
+          <div class="response-pill">
+            <span>전체 기록</span>
+            <strong>${counts.total}</strong>
+          </div>
+          <div class="response-pill done">
+            <span>완료</span>
+            <strong>${counts.done}</strong>
+          </div>
+          <div class="response-pill needs">
+            <span>확인 필요</span>
+            <strong>${counts.needs}</strong>
+          </div>
+          <div class="response-pill">
+            <span>취소</span>
+            <strong>${counts.cancel}</strong>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>회원명</th>
+                <th>상태</th>
+                <th>최종 일정</th>
+                <th>요청 내용</th>
+                <th>등록 메모</th>
+                <th>저장문구</th>
+                <th>예외</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.length ? rows.map(renderHistoryRow).join("") : `<tr><td colspan="7" class="empty">저장된 이력이 없습니다.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      `;
+      saveState();
+    }
+
+    function renderHistoryRow(row) {
+      const exceptionText = [
+        row.durationOverrideCount ? `확보분 ${row.durationOverrideCount}개` : "",
+        row.conflictIgnoreCount ? `경고숨김 ${row.conflictIgnoreCount}개` : ""
+      ].filter(Boolean).join(" · ");
+      return `
+        <tr class="response-row ${["confirmed", "adjusted", "cancel"].includes(row.status) ? "done" : "needs"}">
+          <td><strong>${escapeHtml(row.member.name)}</strong><br><span class="subtle">${escapeHtml(row.member.active ? TYPE_LABELS[row.member.type] || "" : "정지/비활성")}</span></td>
+          <td><span class="status-chip ${escapeHtml(row.status)}">${escapeHtml(row.statusLabel)}</span></td>
+          <td class="wide">${escapeHtml(row.finalText || "-")}</td>
+          <td class="wide">${escapeHtml(row.request || "")}</td>
+          <td class="wide">${escapeHtml(row.note || "")}</td>
+          <td>${row.customMessage ? `<span class="status-chip adjusted">있음</span>` : ""}</td>
+          <td>${exceptionText ? `<span class="status-chip adjusted">${escapeHtml(exceptionText)}</span>` : ""}</td>
+        </tr>
+      `;
+    }
+
+    function historyRowsForExport(weekStart = state.historyWeek || state.weekStart) {
+      return getHistoryRows(weekStart).map((row) => [
+        getWeekLabel(weekStart),
+        row.member.name,
+        row.statusLabel,
+        row.finalText || "",
+        row.request || "",
+        row.note || "",
+        row.customMessage ? "있음" : "",
+        row.durationOverrideCount ? `${row.durationOverrideCount}개` : "",
+        row.conflictIgnoreCount ? `${row.conflictIgnoreCount}개` : ""
+      ]);
+    }
+
+    function copyHistoryRows() {
+      const headers = ["주차", "회원명", "상태", "최종일정", "요청내용", "등록메모", "저장문구", "예외확보분", "경고숨김"];
+      copyText([headers, ...historyRowsForExport()].map((row) => row.join("\t")).join("\n"), "주차 이력을 복사했습니다.");
+    }
+
+    function exportHistoryCsv() {
+      const headers = ["주차", "회원명", "상태", "최종일정", "요청내용", "등록메모", "저장문구", "예외확보분", "경고숨김"];
+      const rows = historyRowsForExport();
+      downloadFile(`짐로드_주차이력_${state.historyWeek || state.weekStart}.csv`, "\ufeff" + [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n"), "text/csv;charset=utf-8");
+    }
+
+    function updateMember(id, field, value) {
+      const member = state.members.find((item) => item.id === id);
+      if (!member) return;
+      const previousFixedText = member.fixedText || "";
+      if (field === "active") member.active = Boolean(value);
+      else if (field === "duration") member.duration = Number(value) || 80;
+      else member[field] = value;
+      if (field === "fixedText") {
+        const review = getWeekReview()[id];
+        if (review && (!review.finalText || review.finalText === previousFixedText)) {
+          review.finalText = value;
+        }
+      }
+      saveState();
+      renderMetrics();
+    }
+
+    function updateReview(id, field, value) {
+      const review = getWeekReview();
+      if (!review[id]) review[id] = {};
+      review[id][field] = value;
+      saveState();
+      renderMetrics();
+    }
+
+    function addMember() {
+      const member = {
+        id: makeId(),
+        name: "새 회원",
+        type: "fixed",
+        active: true,
+        groupId: "",
+        fixedText: "",
+        availability: "",
+        duration: 80,
+        note: ""
+      };
+      state.members.push(member);
+      getWeekReview()[member.id] = {
+        status: "pending",
+        request: "",
+        finalText: "",
+        note: "",
+        customMessage: ""
+      };
+      saveState();
+      render();
+    }
+
+    function saveCustomMessage(id, value) {
+      const review = getWeekReview();
+      if (!review[id]) review[id] = {};
+      review[id].customMessage = String(value || "").trim();
+      saveState();
+      render();
+      showToast("카톡 문구를 저장했습니다.");
+    }
+
+    function resetCustomMessage(id) {
+      const review = getWeekReview();
+      if (!review[id]) review[id] = {};
+      review[id].customMessage = "";
+      saveState();
+      render();
+      showToast("기본 자동문구로 되돌렸습니다.");
+    }
+
+    function duplicateMember(id) {
+      const member = state.members.find((item) => item.id === id);
+      if (!member) return;
+      const copy = Object.assign({}, member, {
+        id: makeId(),
+        name: `${member.name} 복사`
+      });
+      state.members.push(copy);
+      saveState();
+      render();
+    }
+
+    function deleteMember(id) {
+      const member = state.members.find((item) => item.id === id);
+      if (!member) return;
+      if (!window.confirm(`${member.name} 회원을 삭제할까요?`)) return;
+      state.members = state.members.filter((item) => item.id !== id);
+      Object.values(state.reviews).forEach((review) => delete review[id]);
+      saveState();
+      render();
+    }
+
+    async function copyText(text, message = "복사했습니다.") {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (error) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+      }
+      showToast(message);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1600);
+    }
+
+    function csvEscape(value) {
+      const text = String(value ?? "");
+      if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+      return text;
+    }
+
+    function downloadFile(filename, content, type = "text/plain;charset=utf-8") {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportMembersCsv() {
+      const headers = ["회원명", "유형", "활성", "고정일정", "가능범위", "공유그룹", "확보분", "메모"];
+      const rows = state.members.map((member) => [
+        member.name,
+        TYPE_LABELS[member.type] || member.type,
+        member.active ? "Y" : "N",
+        member.fixedText || "",
+        member.availability || "",
+        member.groupId || "",
+        memberDuration(member),
+        member.note || ""
+      ]);
+      downloadFile(`짐로드_회원기본표_${state.weekStart}.csv`, "\ufeff" + [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n"), "text/csv;charset=utf-8");
+    }
+
+    function exportMessagesCsv() {
+      const headers = ["회원명", "상태", "카톡문구"];
+      const rows = getActiveMembers().map((member) => {
+        const review = getReview(member.id);
+        return [member.name, STATUS_LABELS[review.status || "pending"], buildMessage(member)];
+      });
+      downloadFile(`짐로드_카톡문구_${state.weekStart}.csv`, "\ufeff" + [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n"), "text/csv;charset=utf-8");
+    }
+
+    function exportBrojCsv() {
+      const headers = ["상태", "회원명", "날짜", "요일", "시작", "종료", "확보분", "사용구간", "겹침", "메모"];
+      const rows = getBrojRows().map((row) => [
+        row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]),
+        row.name,
+        row.dateISO,
+        row.day,
+        row.time,
+        row.endTime || "",
+        row.duration,
+        row.timeRange || "",
+        row.conflictNote || "",
+        row.note || ""
+      ]);
+      downloadFile(`짐로드_브로제이등록_${state.weekStart}.csv`, "\ufeff" + [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n"), "text/csv;charset=utf-8");
+    }
+
+    function copyBrojRows() {
+      const headers = ["상태", "회원명", "날짜", "요일", "시작", "종료", "확보", "사용구간", "겹침", "메모"];
+      const rows = getBrojRows().map((row) => [
+        row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]),
+        row.name,
+        row.dateLabel || row.dateISO,
+        row.day,
+        row.time,
+        row.endTime || "",
+        `${row.duration}분`,
+        row.timeRange || "",
+        row.conflictNote || "",
+        row.note || ""
+      ]);
+      copyText([headers, ...rows].map((row) => row.join("\t")).join("\n"), "브로제이 표를 복사했습니다.");
+    }
+
+    function copyAllMessages() {
+      const text = getActiveMembers().map((member) => `[${member.name}]\n${buildMessage(member)}`).join("\n\n---\n\n");
+      copyText(text, "전체 카톡 문구를 복사했습니다.");
+    }
+
+    function copySummary() {
+      const item = metrics();
+      const summary = [
+        `짐로드 주간 스케줄 ${weekRangeLabel()}`,
+        `확인 대상: ${item.total}명`,
+        `확정/반영: ${item.confirmed}명`,
+        `확인 필요: ${item.pending}명`,
+        `시간 충돌: ${item.conflicts}건`
+      ].join("\n");
+      copyText(summary, "요약을 복사했습니다.");
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let inQuotes = false;
+      for (let index = 0; index < text.length; index += 1) {
+        const char = text[index];
+        const next = text[index + 1];
+        if (char === '"' && inQuotes && next === '"') {
+          cell += '"';
+          index += 1;
+        } else if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          row.push(cell);
+          cell = "";
+        } else if ((char === "\n" || char === "\r") && !inQuotes) {
+          if (char === "\r" && next === "\n") index += 1;
+          row.push(cell);
+          if (row.some((value) => value.trim() !== "")) rows.push(row);
+          row = [];
+          cell = "";
+        } else {
+          cell += char;
+        }
+      }
+      row.push(cell);
+      if (row.some((value) => value.trim() !== "")) rows.push(row);
+      return rows;
+    }
+
+    function importMembersCsv(text) {
+      const rows = parseCsv(text);
+      if (rows.length < 2) {
+        showToast("CSV에 회원 행이 없습니다.");
+        return;
+      }
+      const headers = rows[0].map((header) => header.trim());
+      const headerMap = {
+        "회원명": "name",
+        "name": "name",
+        "유형": "type",
+        "type": "type",
+        "활성": "active",
+        "active": "active",
+        "고정일정": "fixedText",
+        "fixedText": "fixedText",
+        "가능범위": "availability",
+        "availability": "availability",
+        "공유그룹": "groupId",
+        "공유": "groupId",
+        "그룹": "groupId",
+        "groupId": "groupId",
+        "확보분": "duration",
+        "소요분": "duration",
+        "duration": "duration",
+        "메모": "note",
+        "note": "note"
+      };
+      const imported = rows.slice(1).map((row) => {
+        const member = {
+          id: makeId(),
+          name: "",
+          type: "fixed",
+          active: true,
+          groupId: "",
+          fixedText: "",
+          availability: "",
+          duration: 80,
+          note: ""
+        };
+        headers.forEach((header, index) => {
+          const key = headerMap[header];
+          if (!key) return;
+          const value = (row[index] || "").trim();
+          if (key === "type") {
+            member.type = value.includes("유동") ? "flexible" : value.includes("반") ? "mixed" : value || "fixed";
+            if (!TYPE_LABELS[member.type]) member.type = "fixed";
+          } else if (key === "active") {
+            member.active = !["N", "n", "false", "0", "비활성"].includes(value);
+          } else if (key === "duration") {
+            member.duration = Number(value) || 80;
+          } else {
+            member[key] = value;
+          }
+        });
+        return member.name ? member : null;
+      }).filter(Boolean);
+
+      if (!imported.length) {
+        showToast("가져올 회원명이 없습니다.");
+        return;
+      }
+
+      state.members = state.members.concat(imported);
+      saveState();
+      render();
+      showToast(`${imported.length}명을 추가했습니다.`);
+    }
+
+    function memberTemplateCsv() {
+      const headers = ["회원명", "유형", "활성", "고정일정", "가능범위", "공유그룹", "확보분", "메모"];
+      const rows = [
+        ["홍길동", "고정", "Y", "월 19:00, 목 19:00", "평일 19:00-21:00", "", "80", ""],
+        ["김짐로드", "유동", "Y", "", "화/목 저녁, 토 오전", "", "80", ""],
+        ["부부남편", "반고정", "Y", "월 08:30, 목 17:00", "부부 공유 슬롯", "예시부부", "80", "같은 공유그룹은 서로 겹침 검사 제외"],
+        ["부부아내", "반고정", "Y", "월 17:00, 목 08:30", "부부 공유 슬롯", "예시부부", "80", ""]
+      ];
+      return "\ufeff" + [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n");
+    }
+
+    function resetWeekResponses() {
+      if (!window.confirm("이번 주 응답 상태를 초기화할까요?")) return;
+      state.reviews[state.weekStart] = {};
+      getWeekReview();
+      saveState();
+      render();
+    }
+
+    function markFixedConfirmed() {
+      const review = getWeekReview();
+      getActiveMembers().forEach((member) => {
+        if (member.fixedText) {
+          review[member.id] = Object.assign({}, review[member.id], {
+            status: "confirmed",
+            finalText: review[member.id]?.finalText || member.fixedText
+          });
+        }
+      });
+      saveState();
+      render();
+      showToast("고정 일정 회원을 확정 처리했습니다.");
+    }
+
+    function resetToRealMembers() {
+      if (!window.confirm("현재 회원표와 이번 주 응답을 지우고 실회원 명단으로 다시 불러올까요?")) return;
+      state = defaultState();
+      saveState();
+      render();
+      showToast("실회원 명단으로 초기화했습니다.");
+    }
+
+    function updateChatDraftPreview() {
+      const draft = document.getElementById("chatDraft");
+      const preview = document.getElementById("chatConflictPreview");
+      const overrides = document.getElementById("durationOverrideControls");
+      const member = getChatMember();
+      if (draft && member) draft.value = buildChatDraft(member);
+      if (preview && member) preview.innerHTML = renderCandidateConflictPreview(member);
+      if (overrides && member) overrides.innerHTML = renderDurationOverrideControls(member);
+    }
+
+    function updateConflictOnlyPreview() {
+      const preview = document.getElementById("chatConflictPreview");
+      const member = getChatMember();
+      if (preview && member) preview.innerHTML = renderCandidateConflictPreview(member);
+    }
+
+    function setDurationOverride(memberId, key, value) {
+      const review = getWeekReview();
+      if (!review[memberId]) review[memberId] = {};
+      if (!review[memberId].durationOverrides) review[memberId].durationOverrides = {};
+      const minutes = Number(value);
+      if (Number.isFinite(minutes) && minutes > 0) {
+        review[memberId].durationOverrides[key] = minutes;
+      } else {
+        delete review[memberId].durationOverrides[key];
+      }
+      saveState();
+    }
+
+    function resetDurationOverride(memberId, key) {
+      const review = getWeekReview();
+      if (review[memberId]?.durationOverrides) delete review[memberId].durationOverrides[key];
+      saveState();
+      render();
+      showToast("이번주 예외 확보분을 기본값으로 되돌렸습니다.");
+    }
+
+    function setConflictIgnore(memberId, key, checked) {
+      const review = getWeekReview();
+      if (!review[memberId]) review[memberId] = {};
+      if (!review[memberId].conflictIgnores) review[memberId].conflictIgnores = {};
+      if (checked) {
+        review[memberId].conflictIgnores[key] = true;
+      } else {
+        delete review[memberId].conflictIgnores[key];
+      }
+      saveState();
+      updateConflictOnlyPreview();
+    }
+
+    function updateChatParsePreview() {
+      const result = document.getElementById("parsedScheduleResult");
+      const list = document.getElementById("chatCandidateList");
+      const candidates = extractScheduleCandidates(state.chatPasteText || "");
+      if (result) result.innerHTML = renderParsedScheduleResult(candidates);
+      if (list) {
+        list.innerHTML = candidates.length
+          ? candidates.map((candidate) => `<button class="candidate-chip" data-action="use-candidate" data-value="${escapeHtml(candidate.scheduleText)}">${escapeHtml(candidate.label)}</button>`).join("")
+          : `<span class="subtle">이번 주 날짜/요일과 시간이 잡히면 여기에 후보가 표시됩니다.</span>`;
+      }
+    }
+
+    function textareaValue(id, fallback = "") {
+      const textarea = document.getElementById(id);
+      return textarea ? textarea.value : fallback;
+    }
+
+    function currentChatDraftText() {
+      return textareaValue("chatDraft", buildChatDraft(getChatMember()));
+    }
+
+    function saveCurrentChatDraft() {
+      const member = getChatMember();
+      if (!member) return;
+      saveCustomMessage(member.id, currentChatDraftText());
+    }
+
+    function setChatMember(id) {
+      const member = state.members.find((item) => item.id === id);
+      if (!member) return;
+      state.chatMemberId = id;
+      state.chatCandidateText = getReview(id).finalText || member.fixedText || "";
+      state.chatPasteText = "";
+      saveState();
+      render();
+    }
+
+    function applyChatFinal() {
+      const member = getChatMember();
+      if (!member) return;
+      const review = getReview(member.id);
+      const finalText = (state.chatCandidateText || review.finalText || member.fixedText || "").trim();
+      if (!finalText) {
+        showToast("먼저 최종 일정을 입력해주세요.");
+        return;
+      }
+      const hasConflict = getCandidateConflictChecks(member).some((check) => check.conflicts.length > 0);
+      review.finalText = finalText;
+      review.status = finalText === (member.fixedText || "") ? "confirmed" : "adjusted";
+      saveState();
+      render();
+      showToast(hasConflict ? "최종 일정에 반영했습니다. 시간 겹침을 확인해주세요." : "최종 일정에 반영했습니다. 겹침 없음.");
+    }
+
+    function appendChatCandidate(value) {
+      const current = (state.chatCandidateText || "").trim();
+      state.chatCandidateText = current && !current.includes(value) ? `${current}, ${value}` : value;
+      saveState();
+      render();
+    }
+
+    function parseChatReplyToCandidate() {
+      const parsedText = buildScheduleTextFromPaste();
+      if (!parsedText) {
+        showToast("회원 답변에서 이번 주 일정 시간을 찾지 못했습니다.");
+        return;
+      }
+      state.chatCandidateText = parsedText;
+      state.chatMode = "confirm";
+      saveState();
+      render();
+      showToast("회원 답변에서 등록 내용을 만들었습니다.");
+    }
+
+    document.addEventListener("click", (event) => {
+      const target = event.target.closest("button");
+      if (!target) return;
+
+      if (target.classList.contains("tab")) {
+        activeTab = target.dataset.tab;
+        render();
+        return;
+      }
+
+      const action = target.dataset.action;
+      const id = target.dataset.id;
+      if (action === "delete-member") deleteMember(id);
+      if (action === "duplicate-member") duplicateMember(id);
+      if (action === "select-chat-member") setChatMember(id);
+      if (action === "use-candidate") appendChatCandidate(target.dataset.value || "");
+      if (action === "copy-message") {
+        const member = state.members.find((item) => item.id === id);
+        if (member) copyText(textareaValue(`message-${id}`, buildMessage(member)), "카톡 문구를 복사했습니다.");
+      }
+      if (action === "save-message") {
+        saveCustomMessage(id, textareaValue(`message-${id}`, ""));
+      }
+      if (action === "reset-message") {
+        resetCustomMessage(id);
+      }
+      if (action === "copy-chat-draft") copyText(currentChatDraftText(), "카톡 작업 문구를 복사했습니다.");
+      if (action === "save-chat-draft") saveCurrentChatDraft();
+      if (action === "reset-chat-draft") {
+        const member = getChatMember();
+        if (member) resetCustomMessage(member.id);
+      }
+      if (action === "apply-chat-final") applyChatFinal();
+      if (action === "reset-duration-override") resetDurationOverride(id, target.dataset.key || "");
+      if (action === "set-status") {
+        updateReview(id, "status", target.dataset.status);
+        render();
+      }
+      if (action === "reset-final") {
+        const member = state.members.find((item) => item.id === id);
+        if (member) {
+          updateReview(id, "finalText", member.fixedText || "");
+          render();
+        }
+      }
+
+      if (target.id === "addMember") addMember();
+      if (target.id === "resetToRealMembers") resetToRealMembers();
+      if (target.id === "downloadMemberTemplate") downloadFile("짐로드_회원업로드_양식.csv", memberTemplateCsv(), "text/csv;charset=utf-8");
+      if (target.id === "exportMembersCsv") exportMembersCsv();
+      if (target.id === "importMembersButton") document.getElementById("importMembersInput").click();
+      if (target.id === "copyAllMessages") copyAllMessages();
+      if (target.id === "exportMessagesCsv") exportMessagesCsv();
+      if (target.id === "parseChatReply") parseChatReplyToCandidate();
+      if (target.id === "refreshChatCandidates") render();
+      if (target.id === "markFixedConfirmed") markFixedConfirmed();
+      if (target.id === "resetWeekResponses") resetWeekResponses();
+      if (target.id === "copyBrojRows") copyBrojRows();
+      if (target.id === "exportBrojCsv") exportBrojCsv();
+      if (target.id === "copyHistoryRows") copyHistoryRows();
+      if (target.id === "exportHistoryCsv") exportHistoryCsv();
+      if (target.id === "openDeployGuide") window.open("DEPLOY.md", "_blank");
+      if (target.id === "signInGoogle") signInWithGoogle();
+      if (target.id === "sendMagicLink") sendEmailLoginLink();
+      if (target.id === "saveCloudNow") saveCloudStateNow();
+      if (target.id === "loadCloudNow") loadCloudState();
+      if (target.id === "signOutCloud") signOutCloud();
+      if (target.id === "copySummary") copySummary();
+      if (target.id === "setNextMonday") {
+        state.weekStart = toISODate(getNextMonday(new Date()));
+        state.historyWeek = state.weekStart;
+        saveState();
+        render();
+      }
+      if (target.id === "exportJson") {
+        downloadFile(`짐로드_스케줄데이터_${state.weekStart}.json`, JSON.stringify(state, null, 2), "application/json;charset=utf-8");
+      }
+      if (target.id === "importJsonButton") document.getElementById("importJsonInput").click();
+    });
+
+    document.addEventListener("input", (event) => {
+      const target = event.target;
+      if (target.id === "trainerName") {
+        state.trainerName = target.value;
+        saveState();
+      }
+      if (target.id === "memberSearch") {
+        state.memberSearch = target.value;
+        saveState();
+        renderMembers();
+      }
+      if (target.id === "chatCandidateText") {
+        state.chatCandidateText = target.value;
+        saveState();
+        updateChatDraftPreview();
+      }
+      if (target.id === "chatPasteText") {
+        state.chatPasteText = target.value;
+        saveState();
+        updateChatParsePreview();
+      }
+      if (target.dataset.durationOverrideId && target.dataset.durationKey) {
+        setDurationOverride(target.dataset.durationOverrideId, target.dataset.durationKey, target.value);
+        updateConflictOnlyPreview();
+      }
+      if (target.dataset.conflictIgnoreId && target.dataset.conflictKey) {
+        setConflictIgnore(target.dataset.conflictIgnoreId, target.dataset.conflictKey, target.checked);
+      }
+      if (target.dataset.memberId && target.dataset.memberField) {
+        updateMember(target.dataset.memberId, target.dataset.memberField, target.type === "checkbox" ? target.checked : target.value);
+      }
+      if (target.dataset.reviewId && target.dataset.reviewField) {
+        updateReview(target.dataset.reviewId, target.dataset.reviewField, target.value);
+      }
+    });
+
+    document.addEventListener("change", (event) => {
+      const target = event.target;
+      if (target.id === "weekStart") {
+        state.weekStart = target.value || toISODate(getNextMonday(new Date()));
+        state.historyWeek = state.weekStart;
+        getWeekReview();
+        saveState();
+        render();
+      }
+      if (target.id === "messageTone") {
+        state.messageTone = target.value;
+        saveState();
+        renderMessages();
+      }
+      if (target.id === "chatMemberSelect") {
+        setChatMember(target.value);
+      }
+      if (target.id === "chatMode") {
+        state.chatMode = target.value;
+        saveState();
+        render();
+      }
+      if (target.id === "includePendingBroj") {
+        state.includePendingBroj = target.checked;
+        saveState();
+        render();
+      }
+      if (target.id === "historyWeekSelect") {
+        state.historyWeek = target.value || state.weekStart;
+        saveState();
+        renderHistory();
+      }
+      if (target.dataset.memberId && target.dataset.memberField) {
+        updateMember(target.dataset.memberId, target.dataset.memberField, target.type === "checkbox" ? target.checked : target.value);
+        renderMetrics();
+      }
+      if (target.dataset.reviewId && target.dataset.reviewField) {
+        updateReview(target.dataset.reviewId, target.dataset.reviewField, target.value);
+        if ((activeTab === "responses" || activeTab === "chat") && target.dataset.reviewField === "status") {
+          render();
+        } else {
+          renderMetrics();
+        }
+      }
+      if (target.id === "importMembersInput" && target.files?.[0]) {
+        const reader = new FileReader();
+        reader.onload = () => importMembersCsv(String(reader.result || ""));
+        reader.readAsText(target.files[0], "utf-8");
+        target.value = "";
+      }
+      if (target.id === "importJsonInput" && target.files?.[0]) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const imported = JSON.parse(String(reader.result || ""));
+            state = normalizeStateObject(imported.appState || imported);
+            if (!state.historyWeek || !getHistoryWeeks().includes(state.historyWeek)) state.historyWeek = state.weekStart;
+            saveState();
+            render();
+            showToast("데이터를 불러왔습니다.");
+          } catch (error) {
+            showToast("JSON을 읽지 못했습니다.");
+          }
+        };
+        reader.readAsText(target.files[0], "utf-8");
+        target.value = "";
+      }
+    });
+
+    render();
+    initCloudSync();
+  </script>
+</body>
+</html>
