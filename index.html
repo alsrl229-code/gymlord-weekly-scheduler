@@ -65,6 +65,17 @@
       background: #f9faf7;
     }
 
+    button:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button:disabled:hover {
+      border-color: var(--line);
+      background: var(--surface);
+    }
+
     button:active {
       transform: translateY(1px);
     }
@@ -888,6 +899,43 @@
       box-shadow: var(--shadow);
     }
 
+    .broj-automation-panel {
+      display: grid;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .broj-automation-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(230px, auto);
+      gap: 12px;
+      align-items: end;
+    }
+
+    .broj-result-textarea {
+      min-height: 118px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .broj-bulk-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .broj-bulk-actions button {
+      min-height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
     .broj-mode-title {
       display: grid;
       gap: 5px;
@@ -1112,11 +1160,19 @@
         grid-template-columns: 1fr;
       }
 
+      .broj-automation-grid {
+        grid-template-columns: 1fr;
+      }
+
       .broj-readiness-grid {
         grid-template-columns: repeat(2, minmax(120px, 1fr));
       }
 
       .broj-queue-actions {
+        justify-content: flex-start;
+      }
+
+      .broj-bulk-actions {
         justify-content: flex-start;
       }
 
@@ -1232,6 +1288,8 @@
     };
     const BROJ_LESSON_NAME = "대표 PT";
     const BROJ_DURATION_MINUTES = 60;
+    const BROJ_TRAINER_NAME = "서민기";
+    const BROJ_CRM_URL = "https://crm-beta.broj.co.kr/";
     const BROJ_SEARCH_LABELS = {
       unknown: "검색 확인 전",
       ok: "검색 가능",
@@ -1324,6 +1382,7 @@
         brojMode: "test",
         brojDone: {},
         brojCustomerChecks: {},
+        brojResultText: "",
         chatMemberId: "m_example_flexible_evening",
         chatMode: "confirm",
         chatCandidateText: "",
@@ -1342,6 +1401,7 @@
       next.brojDone = parsed.brojDone && typeof parsed.brojDone === "object" ? parsed.brojDone : {};
       next.brojMode = parsed.brojMode === "live" ? "live" : "test";
       next.brojCustomerChecks = parsed.brojCustomerChecks && typeof parsed.brojCustomerChecks === "object" ? parsed.brojCustomerChecks : {};
+      next.brojResultText = typeof parsed.brojResultText === "string" ? parsed.brojResultText : "";
       next.members.forEach((member) => {
         if (!member.duration || member.duration === 50) member.duration = 80;
         if (member.groupId == null) member.groupId = "";
@@ -2659,6 +2719,42 @@
       renderBroj();
     }
 
+    function setBrojSearchForRows(status, rows) {
+      if (!state.brojCustomerChecks) state.brojCustomerChecks = {};
+      const memberIds = Array.from(new Set((rows || [])
+        .filter((row) => row.memberId)
+        .map((row) => row.memberId)));
+      memberIds.forEach((memberId) => {
+        if (status === "ok" || status === "fail") {
+          state.brojCustomerChecks[memberId] = status;
+        } else {
+          delete state.brojCustomerChecks[memberId];
+        }
+      });
+      saveState();
+      renderBroj();
+    }
+
+    function markUnknownBrojSearchOk() {
+      const rows = getBrojRowsWithState().filter((row) => isBrojReady(row) && row.customerSearchStatus === "unknown");
+      if (!rows.length) {
+        showToast("검색 확인 전 일정이 없습니다.");
+        return;
+      }
+      setBrojSearchForRows("ok", rows);
+      showToast(`${rows.length}건을 검색 가능으로 표시했습니다.`);
+    }
+
+    function clearBrojSearchChecks() {
+      const rows = getBrojRowsWithState().filter(isBrojReady);
+      if (!rows.length) {
+        showToast("초기화할 일정이 없습니다.");
+        return;
+      }
+      setBrojSearchForRows("", rows);
+      showToast("브로제이 검색 상태를 초기화했습니다.");
+    }
+
     function brojSearchStatusClass(status) {
       if (status === "ok") return "confirmed";
       if (status === "fail") return "cancel";
@@ -2718,19 +2814,61 @@
       }));
     }
 
-    function brojAutomationRequest(rows) {
+    function brojAutomationPayload(rows) {
       const mode = state.brojMode === "live" ? "live" : "test";
-      const payload = {
+      return {
         source: "gymlord-weekly-scheduler",
+        version: 2,
+        crmUrl: BROJ_CRM_URL,
         mode,
+        save: mode === "live",
         weekStart: state.weekStart,
         weekLabel: weekRangeLabel(),
-        trainer: state.trainerName || "",
+        trainer: BROJ_TRAINER_NAME,
+        appTrainerName: state.trainerName || "",
         lessonType: BROJ_LESSON_NAME,
         brojDurationMinutes: BROJ_DURATION_MINUTES,
+        registrationRules: {
+          lessonType: BROJ_LESSON_NAME,
+          durationMinutes: BROJ_DURATION_MINUTES,
+          useAppBufferOnlyForConflictCheck: true,
+          skipRowsWhenCustomerSearchFails: true,
+          testModeDoesNotSave: mode !== "live"
+        },
+        resultContract: {
+          rows: [
+            {
+              key: "request row key",
+              status: "registered | search_ok | search_failed | skipped | error",
+              message: ""
+            }
+          ]
+        },
         count: rows.length,
         rows
       };
+    }
+
+    function brojAutomationResultTemplate(rows) {
+      const mode = state.brojMode === "live" ? "live" : "test";
+      return {
+        source: "broj-automation-result",
+        mode,
+        weekStart: state.weekStart,
+        rows: rows.map((row) => ({
+          key: row.key,
+          member: row.member,
+          date: row.date,
+          start: row.start,
+          status: mode === "live" ? "registered" : "search_ok",
+          message: ""
+        }))
+      };
+    }
+
+    function brojAutomationRequest(rows) {
+      const mode = state.brojMode === "live" ? "live" : "test";
+      const payload = brojAutomationPayload(rows);
       const modeLine = mode === "live"
         ? "실제 등록 모드: 각 일정을 대표 PT로 저장까지 진행해줘. 고객 검색 실패/오류가 보이면 그 건은 건너뛰고 마지막에 알려줘."
         : "테스트 모드: 고객 검색과 입력 가능 여부만 확인하고, 저장 버튼은 누르지 마. 가능한 건/실패 건을 마지막에 알려줘.";
@@ -2738,8 +2876,9 @@
         "브로제이 자동등록 요청",
         "",
         "아래 JSON의 rows를 브로제이 캘린더에 순서대로 등록해줘.",
-        `모든 일정은 수업 유형 '${BROJ_LESSON_NAME}', 강사 서민기 기준으로 넣어줘.`,
+        `모든 일정은 수업 유형 '${BROJ_LESSON_NAME}', 강사 ${BROJ_TRAINER_NAME} 기준으로 넣어줘.`,
         `브로제이에 들어가는 시간은 시작시간 기준 ${BROJ_DURATION_MINUTES}분이야. 앱의 확보분은 충돌 계산용이라 브로제이 종료시간과 다를 수 있어.`,
+        "처리 후 resultContract 형식의 JSON을 돌려줘. 이 앱의 결과 반영 칸에 붙여넣으면 완료/검색실패가 다시 반영돼.",
         modeLine,
         "",
         JSON.stringify(payload, null, 2)
@@ -2822,6 +2961,21 @@
             <button class="primary" id="copyBrojAutomationRequest" ${requestRows.length ? "" : "disabled"}>자동등록 요청 복사</button>
             <button id="copyBrojAutomationJson" ${requestRows.length ? "" : "disabled"}>JSON 복사</button>
             <button id="openBrojCrm">브로제이 열기</button>
+          </div>
+        </div>
+        <div class="broj-automation-panel">
+          <div class="broj-automation-grid">
+            <label>
+              Codex 결과 JSON
+              <textarea id="brojResultText" class="broj-result-textarea" placeholder='{"rows":[{"key":"...","status":"registered","message":""}]}' spellcheck="false">${escapeHtml(state.brojResultText || "")}</textarea>
+            </label>
+            <div class="broj-bulk-actions">
+              <button id="markUnknownBrojSearchOk" ${searchUnknownRows.length ? "" : "disabled"}>검색 전부 가능</button>
+              <button id="clearBrojSearchChecks" ${readyRows.length ? "" : "disabled"}>검색 초기화</button>
+              <button id="copyBrojResultTemplate" ${requestRows.length ? "" : "disabled"}>결과 양식 복사</button>
+              <button class="primary" id="applyBrojAutomationResult">결과 반영</button>
+              <button id="clearBrojAutomationResult">비우기</button>
+            </div>
           </div>
         </div>
         <div class="broj-section-label">
@@ -3334,20 +3488,133 @@
         showToast("자동등록 가능한 일정이 없습니다.");
         return;
       }
-      copyText(JSON.stringify({
-        mode: state.brojMode === "live" ? "live" : "test",
-        weekStart: state.weekStart,
-        weekLabel: weekRangeLabel(),
-        lessonType: BROJ_LESSON_NAME,
-        brojDurationMinutes: BROJ_DURATION_MINUTES,
-        rows: readyRows
-      }, null, 2), "브로제이 JSON을 복사했습니다.");
+      copyText(JSON.stringify(brojAutomationPayload(readyRows), null, 2), "브로제이 JSON을 복사했습니다.");
     }
 
     function copyBrojRowJson(key) {
       const row = getBrojRowsWithState().find((item) => item.key === key);
       if (!row) return;
       copyText(JSON.stringify(brojAutomationRows([row])[0] || row, null, 2), "한 건 JSON을 복사했습니다.");
+    }
+
+    function copyBrojResultTemplate() {
+      const readyRows = brojAutomationRows(getBrojRowsWithState());
+      if (!readyRows.length) {
+        showToast("결과 양식을 만들 일정이 없습니다.");
+        return;
+      }
+      copyText(JSON.stringify(brojAutomationResultTemplate(readyRows), null, 2), "브로제이 결과 양식을 복사했습니다.");
+    }
+
+    function clearBrojAutomationResult() {
+      state.brojResultText = "";
+      saveState();
+      renderBroj();
+    }
+
+    function getBrojResultRows(payload) {
+      if (Array.isArray(payload)) return payload;
+      if (!payload || typeof payload !== "object") return [];
+      if (Array.isArray(payload.rows)) return payload.rows;
+      if (Array.isArray(payload.results)) return payload.results;
+      if (Array.isArray(payload.items)) return payload.items;
+      return [];
+    }
+
+    function normalizeBrojResultStatus(result, payloadMode) {
+      const raw = String(result.status || result.result || result.state || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+      if (result.registered === true || result.saved === true) return "registered";
+      if (["registered", "saved", "done", "completed", "complete"].includes(raw)) return "registered";
+      if (["search_ok", "customer_found", "found", "available", "input_ready"].includes(raw)) return "search_ok";
+      if (["search_failed", "customer_not_found", "not_found", "notfound", "failed_search", "no_customer"].includes(raw)) return "search_failed";
+      if (["skipped", "skip"].includes(raw)) return "skipped";
+      if (["error", "failed", "fail"].includes(raw)) return "error";
+      if (["ok", "success", "succeeded"].includes(raw)) return payloadMode === "live" ? "registered" : "search_ok";
+      if (result.customerSearchStatus === "ok" || result.searchStatus === "ok") return "search_ok";
+      if (result.customerSearchStatus === "fail" || result.searchStatus === "fail") return "search_failed";
+      return raw || "error";
+    }
+
+    function findBrojRowForResult(result, rows) {
+      const key = String(result.key || result.rowKey || result.id || "").trim();
+      if (key) {
+        const byKey = rows.find((row) => row.key === key);
+        if (byKey) return byKey;
+      }
+      const member = String(result.member || result.name || result.customer || "").trim();
+      const date = String(result.date || result.dateISO || result.dayDate || "").trim();
+      const start = String(result.start || result.time || result.startTime || "").trim();
+      return rows.find((row) => row.name === member && row.dateISO === date && row.time === start);
+    }
+
+    function applyBrojAutomationResult() {
+      const text = textareaValue("brojResultText", state.brojResultText || "").trim();
+      if (!text) {
+        showToast("반영할 결과 JSON이 없습니다.");
+        return;
+      }
+
+      let payload;
+      try {
+        payload = JSON.parse(text);
+      } catch (error) {
+        showToast("결과 JSON 형식을 확인해주세요.");
+        return;
+      }
+
+      const resultRows = getBrojResultRows(payload);
+      if (!resultRows.length) {
+        showToast("결과 rows가 없습니다.");
+        return;
+      }
+
+      const currentRows = getBrojRowsWithState();
+      const doneMap = getBrojDoneMap();
+      if (!state.brojCustomerChecks) state.brojCustomerChecks = {};
+
+      const payloadMode = payload.mode === "live" || payload.mode === "test" ? payload.mode : (state.brojMode || "test");
+      const counts = { registered: 0, searchOk: 0, searchFailed: 0, skipped: 0, error: 0, unmatched: 0 };
+
+      resultRows.forEach((result) => {
+        const row = findBrojRowForResult(result || {}, currentRows);
+        if (!row) {
+          counts.unmatched += 1;
+          return;
+        }
+
+        const status = normalizeBrojResultStatus(result || {}, payloadMode);
+        if (status === "registered") {
+          doneMap[row.key] = true;
+          state.brojCustomerChecks[row.memberId] = "ok";
+          counts.registered += 1;
+          return;
+        }
+
+        if (status === "search_ok") {
+          state.brojCustomerChecks[row.memberId] = "ok";
+          counts.searchOk += 1;
+          return;
+        }
+
+        if (status === "search_failed") {
+          delete doneMap[row.key];
+          state.brojCustomerChecks[row.memberId] = "fail";
+          counts.searchFailed += 1;
+          return;
+        }
+
+        if (status === "skipped") {
+          counts.skipped += 1;
+          return;
+        }
+
+        counts.error += 1;
+      });
+
+      state.brojResultText = text;
+      saveState();
+      renderBroj();
+      showToast(`완료 ${counts.registered} · 검색가능 ${counts.searchOk} · 검색실패 ${counts.searchFailed} · 미매칭 ${counts.unmatched}`);
     }
 
     function copyAllMessages() {
@@ -3714,8 +3981,13 @@
       if (target.id === "copyBrojRows") copyBrojRows();
       if (target.id === "copyBrojAutomationRequest") copyBrojAutomationRequest();
       if (target.id === "copyBrojAutomationJson") copyBrojAutomationJson();
+      if (target.id === "copyBrojResultTemplate") copyBrojResultTemplate();
+      if (target.id === "applyBrojAutomationResult") applyBrojAutomationResult();
+      if (target.id === "clearBrojAutomationResult") clearBrojAutomationResult();
+      if (target.id === "markUnknownBrojSearchOk") markUnknownBrojSearchOk();
+      if (target.id === "clearBrojSearchChecks") clearBrojSearchChecks();
       if (target.id === "exportBrojCsv") exportBrojCsv();
-      if (target.id === "openBrojCrm") window.open("https://crm-beta.broj.co.kr/", "_blank");
+      if (target.id === "openBrojCrm") window.open(BROJ_CRM_URL, "_blank");
       if (target.id === "copyHistoryRows") copyHistoryRows();
       if (target.id === "exportHistoryCsv") exportHistoryCsv();
       if (target.id === "openDeployGuide") window.open("DEPLOY.md", "_blank");
@@ -3758,6 +4030,10 @@
         state.chatPasteText = target.value;
         saveState();
         updateChatParsePreview();
+      }
+      if (target.id === "brojResultText") {
+        state.brojResultText = target.value;
+        saveState();
       }
       if (target.dataset.durationOverrideId && target.dataset.durationKey) {
         setDurationOverride(target.dataset.durationOverrideId, target.dataset.durationKey, target.value);
