@@ -1711,7 +1711,7 @@
       getActiveMembers().forEach((member) => {
         const item = review[member.id] || {};
         if (item.status === "cancel") return;
-        const includeByStatus = ["confirmed", "adjusted"].includes(item.status) || state.includePendingBroj;
+        const includeByStatus = item.status === "confirmed" || state.includePendingBroj;
         if (!includeByStatus) return;
         const sourceText = item.finalText || member.fixedText || "";
         const slots = parseScheduleText(sourceText);
@@ -2420,6 +2420,7 @@
             <button data-action="copy-chat-draft" class="primary">문구 복사</button>
             <button data-action="save-chat-draft">문구 저장</button>
             <button data-action="apply-chat-final">최종일정 반영</button>
+            <button data-action="confirm-chat-final" class="primary">확정</button>
           </div>
         </div>
         ${selected ? `
@@ -2477,6 +2478,7 @@
                   <button data-action="save-chat-draft">문구 저장</button>
                   <button data-action="reset-chat-draft">기본문구</button>
                   <button data-action="apply-chat-final">최종일정 반영</button>
+                  <button data-action="confirm-chat-final" class="primary">확정</button>
                   <button data-action="set-status" data-id="${selected.id}" data-status="change">변경요청</button>
                   <button data-action="set-status" data-id="${selected.id}" data-status="pending">답변대기</button>
                   <button data-action="set-status" data-id="${selected.id}" data-status="cancel">취소</button>
@@ -3894,6 +3896,21 @@
       showToast(hasConflict ? "최종 일정에 반영했습니다. 시간 겹침을 확인해주세요." : "최종 일정에 반영했습니다. 겹침 없음.");
     }
 
+    function confirmChatMember() {
+      const member = getChatMember();
+      if (!member) return;
+      const review = getReview(member.id);
+      const finalText = (state.chatCandidateText || review.finalText || member.fixedText || "").trim();
+      if (finalText) review.finalText = finalText;
+      review.status = "confirmed";
+      const hasConflict = getCandidateConflictChecks(member).some((check) => check.conflicts.length > 0);
+      saveState();
+      render();
+      showToast(hasConflict
+        ? `${member.name}님 확정 · 브로제이 대기열에 추가. 시간 겹침을 확인해주세요.`
+        : `${member.name}님 확정했습니다. 브로제이 등록 대기열에 들어갑니다.`);
+    }
+
     function appendChatCandidate(value) {
       const current = (state.chatCandidateText || "").trim();
       state.chatCandidateText = current && !current.includes(value) ? `${current}, ${value}` : value;
@@ -3947,6 +3964,7 @@
         if (member) resetCustomMessage(member.id);
       }
       if (action === "apply-chat-final") applyChatFinal();
+      if (action === "confirm-chat-final") confirmChatMember();
       if (action === "reset-duration-override") resetDurationOverride(id, target.dataset.key || "");
       if (action === "remove-candidate-slot") removeCandidateSlot(id, target.dataset.key || "");
       if (action === "copy-broj-value") copyText(target.dataset.value || "", "브로제이 입력값을 복사했습니다.");
