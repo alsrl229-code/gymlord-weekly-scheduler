@@ -65,6 +65,17 @@
       background: #f9faf7;
     }
 
+    button:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button:disabled:hover {
+      border-color: var(--line);
+      background: var(--surface);
+    }
+
     button:active {
       transform: translateY(1px);
     }
@@ -592,6 +603,35 @@
       grid-column: span 3;
     }
 
+    .chat-mode-field {
+      display: grid;
+      grid-column: span 2;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .chat-mode-buttons {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .chat-mode-buttons button {
+      min-height: 38px;
+      padding: 0 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: normal;
+    }
+
+    .chat-mode-buttons button.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
     .chat-draft {
       min-height: 170px;
       background: #fbfcf8;
@@ -827,11 +867,351 @@
       font-size: 12px;
     }
 
+    .broj-queue-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .broj-queue-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .broj-queue-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .broj-queue-title h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .broj-queue-meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .broj-queue-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      align-content: center;
+    }
+
+    .broj-queue-actions button {
+      white-space: nowrap;
+    }
+
+    .broj-mode-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
+      gap: 14px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .broj-automation-panel {
+      display: grid;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .broj-automation-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(230px, auto);
+      gap: 12px;
+      align-items: end;
+    }
+
+    .broj-result-textarea {
+      min-height: 118px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .broj-bulk-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .broj-bulk-actions button {
+      min-height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .broj-mode-title {
+      display: grid;
+      gap: 5px;
+    }
+
+    .broj-mode-title strong {
+      font-size: 17px;
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-auto-flow: column;
+      gap: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 4px;
+      background: #f8faf5;
+    }
+
+    .segmented button {
+      border: 0;
+      min-height: 38px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .segmented button.active {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .broj-readiness-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .broj-readiness-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+    }
+
+    .broj-readiness-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .broj-readiness-card strong {
+      display: block;
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .broj-section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 22px 0 10px;
+    }
+
+    .broj-section-label h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .broj-quick-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .broj-quick-item {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 13px;
+    }
+
+    .broj-quick-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .broj-quick-name {
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .broj-quick-time {
+      color: var(--ink);
+      font-family: var(--mono);
+      font-weight: 900;
+    }
+
+    .broj-quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .broj-quick-actions button {
+      min-height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .broj-search-state {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .broj-search-state button {
+      min-height: 28px;
+      padding: 0 8px;
+      font-size: 12px;
+    }
+
+    .broj-blocked {
+      opacity: 0.78;
+    }
+
     .conflict-detail {
       color: var(--red);
       font-size: 12px;
       font-weight: 800;
       line-height: 1.35;
+    }
+
+    .schedule-choice-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(30, 36, 31, 0.42);
+    }
+
+    .schedule-choice-backdrop.open {
+      display: flex;
+    }
+
+    .schedule-choice-dialog {
+      width: min(560px, 100%);
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 18px 46px rgba(30, 36, 31, 0.22);
+    }
+
+    .schedule-choice-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 18px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .schedule-choice-head h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+    }
+
+    .schedule-choice-head p {
+      margin: 0;
+    }
+
+    .schedule-choice-close {
+      width: 34px;
+      min-height: 34px;
+      padding: 0;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .schedule-choice-body {
+      display: grid;
+      gap: 12px;
+      padding: 16px 18px 18px;
+    }
+
+    .schedule-choice-warning {
+      border: 1px solid rgba(183, 75, 65, 0.28);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(183, 75, 65, 0.08);
+      color: var(--red);
+      font-weight: 900;
+      line-height: 1.45;
+    }
+
+    .schedule-choice-options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .schedule-choice-option {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      padding: 13px;
+      border-radius: 8px;
+      text-align: left;
+      white-space: normal;
+    }
+
+    .schedule-choice-option strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .schedule-choice-option span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .schedule-choice-option.current {
+      border-color: var(--green);
+      background: rgba(47, 101, 74, 0.08);
+    }
+
+    .schedule-choice-option.existing {
+      border-color: rgba(183, 75, 65, 0.36);
+      background: #fff;
     }
 
     .mono {
@@ -903,8 +1283,44 @@
         grid-column: auto;
       }
 
+      .chat-mode-buttons {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .chat-mode-field {
+        grid-column: auto;
+      }
+
       .panel-head {
         align-items: flex-start;
+      }
+
+      .broj-queue-head {
+        grid-template-columns: 1fr;
+      }
+
+      .broj-mode-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .broj-automation-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .broj-readiness-grid {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      }
+
+      .broj-queue-actions {
+        justify-content: flex-start;
+      }
+
+      .broj-bulk-actions {
+        justify-content: flex-start;
+      }
+
+      .broj-queue-actions button {
+        flex: 1 1 150px;
       }
 
       .member-table {
@@ -919,7 +1335,8 @@
 
     @media (max-width: 480px) {
       .top-controls,
-      .metrics {
+      .metrics,
+      .broj-readiness-grid {
         grid-template-columns: 1fr;
       }
 
@@ -994,23 +1411,38 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <div class="schedule-choice-backdrop" id="scheduleChoiceModal" aria-hidden="true"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
   <script>
     const STORAGE_KEY = "gymlord.weeklyScheduler.v1";
-    const DAYS = ["월", "화", "수", "목", "금", "토", "일"];
-    const STATUS_LABELS = {
-      pending: "답변대기",
-      confirmed: "확정",
-      change: "변경요청",
-      adjusted: "변경반영",
-      cancel: "취소"
-    };
+	    const DAYS = ["월", "화", "수", "목", "금", "토", "일"];
+	    const STATUS_LABELS = {
+	      pending: "답변대기",
+	      change: "변경요청",
+	      confirmed: "확정"
+	    };
+	    const CHAT_MODES = [
+	      { value: "confirm", label: "최종 확정" },
+	      { value: "propose", label: "시간 제안" },
+	      { value: "ask", label: "가능시간 질문" },
+	      { value: "followup", label: "무응답 재확인" },
+	      { value: "thanks", label: "감사 마무리" }
+	    ];
     const TYPE_LABELS = {
       fixed: "고정",
       mixed: "반고정",
       flexible: "유동"
+    };
+    const BROJ_LESSON_NAME = "대표 PT";
+    const BROJ_DURATION_MINUTES = 60;
+    const BROJ_TRAINER_NAME = "서민기";
+    const BROJ_CRM_URL = "https://crm-beta.broj.co.kr/";
+    const BROJ_SEARCH_LABELS = {
+      unknown: "검색 확인 전",
+      ok: "검색 가능",
+      fail: "검색 실패"
     };
     const SUPABASE_CONFIG = Object.assign({
       url: "",
@@ -1023,6 +1455,7 @@
     let memberSearchComposing = false;
     let supabaseClient = null;
     let cloudSaveTimer = null;
+    let pendingScheduleChoice = null;
     const cloudState = {
       configured: false,
       session: null,
@@ -1035,9 +1468,9 @@
     };
     let state = loadState();
 
-    function defaultState() {
-      const weekStart = toISODate(getNextMonday(new Date()));
-      const members = [
+	    function defaultState() {
+	      const weekStart = toISODate(getNextMonday(new Date()));
+	      const members = [
         {
           id: "m_example_fixed_morning",
           name: "예시회원 고정아침",
@@ -1096,23 +1529,45 @@
         memberSearch: "",
         includePendingBroj: false,
         hideDoneBroj: false,
+        brojMode: "test",
         brojDone: {},
+        brojCustomerChecks: {},
+        brojResultText: "",
         chatMemberId: "m_example_flexible_evening",
         chatMode: "confirm",
         chatCandidateText: "",
         chatPasteText: "",
         historyWeek: weekStart,
-        durationMigratedToBuffer: true
-      };
-    }
+	        durationMigratedToBuffer: true
+	      };
+	    }
 
-    function normalizeStateObject(imported = {}) {
-      const parsed = imported && typeof imported === "object" ? imported : {};
-      const fallback = defaultState();
-      const next = Object.assign(fallback, parsed);
-      next.members = Array.isArray(parsed.members) && parsed.members.length ? parsed.members : fallback.members;
-      next.reviews = parsed.reviews && typeof parsed.reviews === "object" ? parsed.reviews : {};
+	    function normalizeStatus(status) {
+	      if (status === "confirmed" || status === "adjusted") return "confirmed";
+	      if (status === "change" || status === "cancel") return "change";
+	      return "pending";
+	    }
+
+	    function normalizeReviewStatuses(reviews) {
+	      Object.values(reviews || {}).forEach((weekReview) => {
+	        Object.values(weekReview || {}).forEach((review) => {
+	          if (review && typeof review === "object") review.status = normalizeStatus(review.status);
+	        });
+	      });
+	    }
+
+	    function normalizeStateObject(imported = {}) {
+	      const parsed = imported && typeof imported === "object" ? imported : {};
+	      const fallback = defaultState();
+	      const next = Object.assign(fallback, parsed);
+	      next.members = Array.isArray(parsed.members) && parsed.members.length ? parsed.members : fallback.members;
+	      next.reviews = parsed.reviews && typeof parsed.reviews === "object" ? parsed.reviews : {};
+	      normalizeReviewStatuses(next.reviews);
       next.brojDone = parsed.brojDone && typeof parsed.brojDone === "object" ? parsed.brojDone : {};
+	      next.brojMode = parsed.brojMode === "live" ? "live" : "test";
+	      next.brojCustomerChecks = parsed.brojCustomerChecks && typeof parsed.brojCustomerChecks === "object" ? parsed.brojCustomerChecks : {};
+	      next.brojResultText = typeof parsed.brojResultText === "string" ? parsed.brojResultText : "";
+	      if (!CHAT_MODES.some((mode) => mode.value === next.chatMode)) next.chatMode = "confirm";
       next.members.forEach((member) => {
         if (!member.duration || member.duration === 50) member.duration = 80;
         if (member.groupId == null) member.groupId = "";
@@ -1196,10 +1651,11 @@
             durationOverrides: {},
             conflictIgnores: {}
           };
-        } else {
-          if (!review[member.id].durationOverrides) review[member.id].durationOverrides = {};
-          if (!review[member.id].conflictIgnores) review[member.id].conflictIgnores = {};
-        }
+	        } else {
+	          review[member.id].status = normalizeStatus(review[member.id].status);
+	          if (!review[member.id].durationOverrides) review[member.id].durationOverrides = {};
+	          if (!review[member.id].conflictIgnores) review[member.id].conflictIgnores = {};
+	        }
       });
       return review;
     }
@@ -1421,8 +1877,7 @@
       const rows = [];
       getActiveMembers().forEach((member) => {
         const item = review[member.id] || {};
-        if (item.status === "cancel") return;
-        const includeByStatus = ["confirmed", "adjusted"].includes(item.status) || state.includePendingBroj;
+	        const includeByStatus = item.status === "confirmed" || state.includePendingBroj;
         if (!includeByStatus) return;
         const sourceText = item.finalText || member.fixedText || "";
         const slots = parseScheduleText(sourceText);
@@ -1503,8 +1958,8 @@
         total: active.length,
         fixed: active.filter((member) => member.type === "fixed").length,
         flexible: active.filter((member) => member.type !== "fixed").length,
-        confirmed: active.filter((member) => ["confirmed", "adjusted"].includes(review[member.id]?.status)).length,
-        pending: active.filter((member) => !["confirmed", "adjusted", "cancel"].includes(review[member.id]?.status)).length,
+	        confirmed: active.filter((member) => review[member.id]?.status === "confirmed").length,
+	        pending: active.filter((member) => review[member.id]?.status !== "confirmed").length,
         conflicts: rows.filter((row) => row.conflict).length
       };
     }
@@ -1541,7 +1996,7 @@
         ["확인 대상", item.total],
         ["고정 회원", item.fixed],
         ["유동/반고정", item.flexible],
-        ["확정/반영", item.confirmed],
+	        ["확정", item.confirmed],
         ["확인 필요", item.pending, "warn"],
         ["시간 충돌", item.conflicts, item.conflicts ? "danger" : ""]
       ];
@@ -1884,7 +2339,7 @@
 
     function responseSortValue(member) {
       const status = getReview(member.id).status || "pending";
-      const order = { change: 0, pending: 1, adjusted: 2, confirmed: 3, cancel: 4 };
+	      const order = { pending: 0, change: 1, confirmed: 2 };
       return order[status] ?? 5;
     }
 
@@ -2003,8 +2458,7 @@
       getActiveMembers().forEach((member) => {
         if (member.id === excludeMemberId) return;
         const item = review[member.id] || {};
-        if (item.status === "cancel") return;
-        const sourceText = item.finalText || member.fixedText || "";
+	        const sourceText = item.finalText || member.fixedText || "";
         parseScheduleText(sourceText).forEach((slot) => {
           const startMinutes = timeToMinutes(slot.time);
           const duration = slotDuration(member, slot.dateISO, slot.time);
@@ -2041,12 +2495,234 @@
         return {
           label: `${formatKoreanDate(slot.date)} ${displayTimeRange(slot.time, minutesToTime(endMinutes))}`,
           key: slotOverrideKey(slot.dateISO, slot.time),
+          dateISO: slot.dateISO,
+          day: slot.day,
+          time: slot.time,
+          endTime: minutesToTime(endMinutes),
+          startMinutes,
+          endMinutes,
           duration,
           durationOverride: hasSlotDurationOverride(member, slot.dateISO, slot.time),
           conflictIgnored: ignored,
           conflicts
         };
       });
+    }
+
+    function getExactScheduleCollision(member) {
+      return getCandidateConflictChecks(member).reduce((found, check) => {
+        if (found) return found;
+        const exactMatch = check.conflicts.find((row) => row.dateISO === check.dateISO && row.time === check.time);
+        return exactMatch ? { check, existing: exactMatch } : null;
+      }, null);
+    }
+
+    function removeSlotFromScheduleText(text, dateISO, time) {
+      return parseScheduleText(text)
+        .filter((slot) => slot.dateISO !== dateISO || slot.time !== time)
+        .map((slot) => `${slot.day} ${slot.time}`)
+        .join(", ");
+    }
+
+    function scheduleTextFromSlots(slots) {
+      return (slots || [])
+        .slice()
+        .sort((a, b) => (a.date - b.date) || a.time.localeCompare(b.time))
+        .map((slot) => `${slot.day} ${slot.time}`)
+        .join(", ");
+    }
+
+    function getSameDayDuplicate(text) {
+      const slots = parseScheduleText(text);
+      const grouped = new Map();
+      slots.forEach((slot) => {
+        if (!grouped.has(slot.dateISO)) grouped.set(slot.dateISO, []);
+        grouped.get(slot.dateISO).push(slot);
+      });
+      for (const [dateISO, daySlots] of grouped.entries()) {
+        const uniqueSlots = daySlots.filter((slot, index, list) => list.findIndex((item) => item.time === slot.time) === index);
+        if (uniqueSlots.length < 2) continue;
+        return {
+          dateISO,
+          dateLabel: formatKoreanDate(uniqueSlots[0].date),
+          slots: uniqueSlots.map((slot) => ({
+            date: slot.date,
+            dateISO: slot.dateISO,
+            day: slot.day,
+            time: slot.time,
+            key: slotOverrideKey(slot.dateISO, slot.time),
+            label: `${formatKoreanDate(slot.date)} ${displayTime(slot.time)}`
+          }))
+        };
+      }
+      return null;
+    }
+
+    function keepOnlyOneSlotForDate(text, dateISO, time) {
+      const slots = parseScheduleText(text);
+      const chosen = slots.find((slot) => slot.dateISO === dateISO && slot.time === time);
+      if (!chosen) return scheduleTextFromSlots(slots);
+      return scheduleTextFromSlots(slots.filter((slot) => slot.dateISO !== dateISO).concat(chosen));
+    }
+
+    function removeExistingCollisionSlot(collision) {
+      const existing = collision?.existing;
+      const member = state.members.find((item) => item.id === existing?.memberId);
+      if (!member) return false;
+      const review = getWeekReview();
+      if (!review[member.id]) {
+        review[member.id] = {
+          status: "pending",
+          request: "",
+          finalText: member.fixedText || "",
+          note: "",
+          customMessage: "",
+          durationOverrides: {},
+          conflictIgnores: {}
+        };
+      }
+      if (!review[member.id].durationOverrides) review[member.id].durationOverrides = {};
+      if (!review[member.id].conflictIgnores) review[member.id].conflictIgnores = {};
+      const sourceText = (review[member.id].finalText || member.fixedText || "").trim();
+      const nextText = removeSlotFromScheduleText(sourceText, existing.dateISO, existing.time);
+      review[member.id].finalText = nextText || "일정 재확인 필요";
+	      review[member.id].status = "change";
+      const key = slotOverrideKey(existing.dateISO, existing.time);
+      delete review[member.id].durationOverrides[key];
+      delete review[member.id].conflictIgnores[key];
+      return true;
+    }
+
+    function openScheduleChoiceModal(member, collision, mode) {
+      const modal = document.getElementById("scheduleChoiceModal");
+      if (!modal || !member || !collision) return false;
+      pendingScheduleChoice = { type: "external-conflict", memberId: member.id, collision, mode };
+      const currentRange = displayTimeRange(collision.check.time, collision.check.endTime) || displayTime(collision.check.time);
+      const existingRange = displayTimeRange(collision.existing.time, collision.existing.endTime) || displayTime(collision.existing.time);
+      modal.innerHTML = `
+        <div class="schedule-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="scheduleChoiceTitle">
+          <div class="schedule-choice-head">
+            <div>
+              <h2 id="scheduleChoiceTitle">같은 요일/시간 일정이 있습니다</h2>
+              <p class="subtle">둘 중 어떤 회원을 이 시간 스케줄로 지정할지 선택해주세요.</p>
+            </div>
+            <button class="schedule-choice-close" data-action="close-schedule-choice" aria-label="닫기">x</button>
+          </div>
+          <div class="schedule-choice-body">
+            <div class="schedule-choice-warning">
+              ${escapeHtml(collision.check.label)}에 이미 ${escapeHtml(collision.existing.name)}님 일정이 등록되어 있습니다.
+            </div>
+            <div class="schedule-choice-options">
+              <button class="schedule-choice-option current" data-action="resolve-schedule-choice" data-choice="current">
+                <strong>${escapeHtml(member.name)}님으로 지정</strong>
+                <span>현재 입력한 ${escapeHtml(currentRange)} 일정을 반영하고, ${escapeHtml(collision.existing.name)}님 같은 시간은 이번 주 최종일정에서 제거합니다.</span>
+              </button>
+              <button class="schedule-choice-option existing" data-action="resolve-schedule-choice" data-choice="existing">
+                <strong>${escapeHtml(collision.existing.name)}님 일정 유지</strong>
+                <span>기존 ${escapeHtml(existingRange)} 일정을 그대로 두고, ${escapeHtml(member.name)}님 일정 반영은 중단합니다.</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      modal.querySelector("[data-choice='current']")?.focus();
+      return true;
+    }
+
+    function openSameDayChoiceModal(member, duplicate, mode, sourceText) {
+      const modal = document.getElementById("scheduleChoiceModal");
+      if (!modal || !member || !duplicate) return false;
+      pendingScheduleChoice = { type: "same-day", memberId: member.id, duplicate, mode, sourceText };
+      modal.innerHTML = `
+        <div class="schedule-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="scheduleChoiceTitle">
+          <div class="schedule-choice-head">
+            <div>
+              <h2 id="scheduleChoiceTitle">같은 요일 일정이 있습니다</h2>
+              <p class="subtle">이 날짜에는 어떤 시간 하나로 잡아둘지 선택해주세요.</p>
+            </div>
+            <button class="schedule-choice-close" data-action="close-schedule-choice" aria-label="닫기">x</button>
+          </div>
+          <div class="schedule-choice-body">
+            <div class="schedule-choice-warning">
+              ${escapeHtml(duplicate.dateLabel)}에 일정이 ${duplicate.slots.length}개 들어가 있습니다.
+            </div>
+            <div class="schedule-choice-options">
+              ${duplicate.slots.map((slot) => `
+                <button class="schedule-choice-option current" data-action="resolve-schedule-choice" data-choice="${escapeHtml(slot.time)}">
+                  <strong>${escapeHtml(member.name)}님 ${escapeHtml(displayTime(slot.time))}</strong>
+                  <span>${escapeHtml(duplicate.dateLabel)} 일정은 ${escapeHtml(displayTime(slot.time))}만 남기고 같은 요일의 다른 시간은 제거합니다.</span>
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        </div>
+      `;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      modal.querySelector("[data-choice]")?.focus();
+      return true;
+    }
+
+    function closeScheduleChoiceModal() {
+      const modal = document.getElementById("scheduleChoiceModal");
+      pendingScheduleChoice = null;
+      if (!modal) return;
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      modal.innerHTML = "";
+    }
+
+    function maybeOpenScheduleChoice(member, mode) {
+      const collision = getExactScheduleCollision(member);
+      if (!collision) return false;
+      return openScheduleChoiceModal(member, collision, mode);
+    }
+
+    function maybeOpenSameDayChoice(member, mode, text) {
+      const sourceText = (text || state.chatCandidateText || getReview(member.id).finalText || member.fixedText || "").trim();
+      const duplicate = getSameDayDuplicate(sourceText);
+      if (!duplicate) return false;
+      return openSameDayChoiceModal(member, duplicate, mode, sourceText);
+    }
+
+    function resolveScheduleChoice(choice) {
+      const pending = pendingScheduleChoice;
+      if (!pending) return;
+      const member = state.members.find((item) => item.id === pending.memberId);
+      closeScheduleChoiceModal();
+      if (!member) return;
+      state.chatMemberId = member.id;
+
+      if (pending.type === "same-day") {
+        const nextText = keepOnlyOneSlotForDate(pending.sourceText || "", pending.duplicate.dateISO, choice);
+        state.chatCandidateText = nextText;
+        saveState();
+        if (pending.mode === "confirm") confirmChatMember({ skipSameDayChoice: true });
+        else if (pending.mode === "apply") applyChatFinal({ skipSameDayChoice: true });
+        else {
+          render();
+          showToast(`${pending.duplicate.dateLabel} 일정은 ${displayTime(choice)}로 남겼습니다.`);
+        }
+        return;
+      }
+
+      const existingName = pending.collision?.existing?.name || "기존 회원";
+      if (choice === "current") {
+        if (!removeExistingCollisionSlot(pending.collision)) {
+          showToast("기존 회원 일정을 찾지 못해 선택을 중단했습니다.");
+          return;
+        }
+        if (pending.mode === "confirm") confirmChatMember({ skipScheduleChoice: true });
+        else applyChatFinal({ skipScheduleChoice: true });
+        showToast(`${member.name}님 일정으로 지정하고 ${existingName}님 같은 시간은 제외했습니다.`);
+        return;
+      }
+      if (choice === "existing") {
+        render();
+        showToast(`${existingName}님 일정을 유지했습니다. 현재 회원 일정은 반영하지 않았습니다.`);
+      }
     }
 
     function renderCandidateConflictPreview(member) {
@@ -2131,6 +2807,7 @@
             <button data-action="copy-chat-draft" class="primary">문구 복사</button>
             <button data-action="save-chat-draft">문구 저장</button>
             <button data-action="apply-chat-final">최종일정 반영</button>
+            <button data-action="confirm-chat-final" class="primary">확정</button>
           </div>
         </div>
         ${selected ? `
@@ -2149,28 +2826,26 @@
                   ${review.customMessage ? `<span class="status-chip adjusted">저장문구</span>` : ""}
                 </div>
                 <div class="chat-compose-grid">
-                  <label>
-                    회원
-                    <select id="chatMemberSelect">
-                      ${activeMembers.map((member) => `<option value="${member.id}" ${member.id === selected.id ? "selected" : ""}>${escapeHtml(member.name)}</option>`).join("")}
-                    </select>
-                  </label>
-                  <label>
-                    작업
-                    <select id="chatMode">
-                      <option value="confirm" ${state.chatMode === "confirm" ? "selected" : ""}>최종 확정</option>
-                      <option value="propose" ${state.chatMode === "propose" ? "selected" : ""}>시간 제안</option>
-                      <option value="ask" ${state.chatMode === "ask" ? "selected" : ""}>가능시간 질문</option>
-                      <option value="followup" ${state.chatMode === "followup" ? "selected" : ""}>무응답 재확인</option>
-                      <option value="thanks" ${state.chatMode === "thanks" ? "selected" : ""}>감사 마무리</option>
-                    </select>
-                  </label>
-                  <label>
-                    상태
-                    <select data-review-id="${selected.id}" data-review-field="status">
-                      ${Object.entries(STATUS_LABELS).map(([value, label]) => `<option value="${value}" ${review.status === value ? "selected" : ""}>${label}</option>`).join("")}
-                    </select>
-                  </label>
+	                  <label>
+	                    회원
+	                    <select id="chatMemberSelect">
+	                      ${activeMembers.map((member) => `<option value="${member.id}" ${member.id === selected.id ? "selected" : ""}>${escapeHtml(member.name)}</option>`).join("")}
+	                    </select>
+	                  </label>
+	                  <div class="chat-mode-field">
+	                    <span>작업</span>
+	                    <div class="chat-mode-buttons" role="tablist" aria-label="카톡 작업 선택">
+	                      ${CHAT_MODES.map((mode) => `
+	                        <button type="button" role="tab" aria-selected="${state.chatMode === mode.value ? "true" : "false"}" class="${state.chatMode === mode.value ? "active" : ""}" data-action="set-chat-mode" data-mode="${escapeHtml(mode.value)}">${escapeHtml(mode.label)}</button>
+	                      `).join("")}
+	                    </div>
+	                  </div>
+	                  <label>
+	                    상태
+	                    <select data-review-id="${selected.id}" data-review-field="status">
+	                      ${Object.entries(STATUS_LABELS).map(([value, label]) => `<option value="${value}" ${review.status === value ? "selected" : ""}>${label}</option>`).join("")}
+	                    </select>
+	                  </label>
                   <label class="wide-field">
                     제안/최종 일정
                     <input id="chatCandidateText" type="text" value="${escapeHtml(state.chatCandidateText || review.finalText || selected.fixedText || "")}" placeholder="예: 월 18:00, 수 10:10, 금 10:10">
@@ -2188,10 +2863,10 @@
                   <button data-action="save-chat-draft">문구 저장</button>
                   <button data-action="reset-chat-draft">기본문구</button>
                   <button data-action="apply-chat-final">최종일정 반영</button>
+                  <button data-action="confirm-chat-final" class="primary">확정</button>
                   <button data-action="set-status" data-id="${selected.id}" data-status="change">변경요청</button>
                   <button data-action="set-status" data-id="${selected.id}" data-status="pending">답변대기</button>
-                  <button data-action="set-status" data-id="${selected.id}" data-status="cancel">취소</button>
-                </div>
+	                </div>
               </div>
               <div class="mini-panel">
                 <div class="mini-panel-head">
@@ -2313,15 +2988,15 @@
         </div>
         ${activeMembers.length ? `
           ${renderResponseSection("확인 필요", "답변대기/변경요청 상태라 아직 처리해야 하는 회원", needsMembers, "needs")}
-          ${renderResponseSection("확인 완료", "확정/변경반영/취소 상태로 정리된 회원", doneMembers, "done")}
+	          ${renderResponseSection("확인 완료", "확정 상태로 정리된 회원", doneMembers, "done")}
         ` : `<div class="empty">활성 회원이 없습니다.</div>`}
       `;
     }
 
-    function isResponseDone(member) {
-      const status = getReview(member.id).status || "pending";
-      return ["confirmed", "adjusted", "cancel"].includes(status);
-    }
+	    function isResponseDone(member) {
+	      const status = getReview(member.id).status || "pending";
+	      return status === "confirmed";
+	    }
 
     function renderResponseSection(title, subtitle, members, className) {
       return `
@@ -2408,8 +3083,81 @@
       renderBroj();
     }
 
+    function setBrojMode(mode) {
+      state.brojMode = mode === "live" ? "live" : "test";
+      saveState();
+      renderBroj();
+    }
+
+    function getBrojCustomerCheck(memberId) {
+      return state.brojCustomerChecks?.[memberId] || "unknown";
+    }
+
+    function setBrojCustomerCheck(memberId, status) {
+      if (!memberId) return;
+      if (!state.brojCustomerChecks) state.brojCustomerChecks = {};
+      if (status === "ok" || status === "fail") {
+        state.brojCustomerChecks[memberId] = status;
+      } else {
+        delete state.brojCustomerChecks[memberId];
+      }
+      saveState();
+      renderBroj();
+    }
+
+    function setBrojSearchForRows(status, rows) {
+      if (!state.brojCustomerChecks) state.brojCustomerChecks = {};
+      const memberIds = Array.from(new Set((rows || [])
+        .filter((row) => row.memberId)
+        .map((row) => row.memberId)));
+      memberIds.forEach((memberId) => {
+        if (status === "ok" || status === "fail") {
+          state.brojCustomerChecks[memberId] = status;
+        } else {
+          delete state.brojCustomerChecks[memberId];
+        }
+      });
+      saveState();
+      renderBroj();
+    }
+
+    function markUnknownBrojSearchOk() {
+      const rows = getBrojRowsWithState().filter((row) => isBrojReady(row) && row.customerSearchStatus === "unknown");
+      if (!rows.length) {
+        showToast("검색 확인 전 일정이 없습니다.");
+        return;
+      }
+      setBrojSearchForRows("ok", rows);
+      showToast(`${rows.length}건을 검색 가능으로 표시했습니다.`);
+    }
+
+    function clearBrojSearchChecks() {
+      const rows = getBrojRowsWithState().filter(isBrojReady);
+      if (!rows.length) {
+        showToast("초기화할 일정이 없습니다.");
+        return;
+      }
+      setBrojSearchForRows("", rows);
+      showToast("브로제이 검색 상태를 초기화했습니다.");
+    }
+
+    function brojSearchStatusClass(status) {
+      if (status === "ok") return "confirmed";
+      if (status === "fail") return "cancel";
+      return "";
+    }
+
     function brojLessonName(row) {
-      return row.note && /1:1|대표|PT/.test(row.note) ? row.note : "1:1 PT";
+      return BROJ_LESSON_NAME;
+    }
+
+    function brojRegisteredEndTime(row) {
+      const start = timeToMinutes(row.time);
+      return start === null ? "" : minutesToTime(start + BROJ_DURATION_MINUTES);
+    }
+
+    function brojRegisteredTimeRange(row) {
+      return displayTimeRange(row.time, brojRegisteredEndTime(row));
     }
 
     function brojCopyLine(row) {
@@ -2418,18 +3166,130 @@
         `일정명: ${brojLessonName(row)}`,
         `날짜: ${row.dateISO}`,
         `시작: ${row.time}`,
-        `종료: ${row.endTime || ""}`
+        `종료: ${brojRegisteredEndTime(row)}`,
+        `브로제이 기준: ${BROJ_DURATION_MINUTES}분`,
+        `확보분: ${row.duration}분`
+      ].join("\n");
+    }
+
+    function isBrojReady(row) {
+      return !row.done && !row.needsCheck && !row.conflict && row.dateISO && row.time;
+    }
+
+    function isBrojRequestable(row) {
+      return isBrojReady(row) && row.customerSearchStatus !== "fail";
+    }
+
+    function brojAutomationRows(rows) {
+      return rows.filter(isBrojRequestable).map((row) => ({
+        key: row.key,
+        member: row.name,
+        memberId: row.memberId,
+        lessonName: brojLessonName(row),
+        lessonType: BROJ_LESSON_NAME,
+        date: row.dateISO,
+        day: row.day,
+        start: row.time,
+        end: brojRegisteredEndTime(row),
+        brojDurationMinutes: BROJ_DURATION_MINUTES,
+        bufferMinutes: row.duration,
+        customerSearchStatus: row.customerSearchStatus || "unknown",
+        note: row.note || "",
+        mode: state.brojMode || "test",
+        save: state.brojMode === "live"
+      }));
+    }
+
+    function brojAutomationPayload(rows) {
+      const mode = state.brojMode === "live" ? "live" : "test";
+      return {
+        source: "gymlord-weekly-scheduler",
+        version: 2,
+        crmUrl: BROJ_CRM_URL,
+        mode,
+        save: mode === "live",
+        weekStart: state.weekStart,
+        weekLabel: weekRangeLabel(),
+        trainer: BROJ_TRAINER_NAME,
+        appTrainerName: state.trainerName || "",
+        lessonType: BROJ_LESSON_NAME,
+        brojDurationMinutes: BROJ_DURATION_MINUTES,
+        registrationRules: {
+          lessonType: BROJ_LESSON_NAME,
+          durationMinutes: BROJ_DURATION_MINUTES,
+          useAppBufferOnlyForConflictCheck: true,
+          skipRowsWhenCustomerSearchFails: true,
+          testModeDoesNotSave: mode !== "live"
+        },
+        resultContract: {
+          rows: [
+            {
+              key: "request row key",
+              status: "registered | search_ok | search_failed | skipped | error",
+              message: ""
+            }
+          ]
+        },
+        count: rows.length,
+        rows
+      };
+    }
+
+    function brojAutomationResultTemplate(rows) {
+      const mode = state.brojMode === "live" ? "live" : "test";
+      return {
+        source: "broj-automation-result",
+        mode,
+        weekStart: state.weekStart,
+        rows: rows.map((row) => ({
+          key: row.key,
+          member: row.member,
+          date: row.date,
+          start: row.start,
+          status: mode === "live" ? "registered" : "search_ok",
+          message: ""
+        }))
+      };
+    }
+
+    function brojAutomationRequest(rows) {
+      const mode = state.brojMode === "live" ? "live" : "test";
+      const payload = brojAutomationPayload(rows);
+      const modeLine = mode === "live"
+        ? "실제 등록 모드: 각 일정을 대표 PT로 저장까지 진행해줘. 고객 검색 실패/오류가 보이면 그 건은 건너뛰고 마지막에 알려줘."
+        : "테스트 모드: 고객 검색과 입력 가능 여부만 확인하고, 저장 버튼은 누르지 마. 가능한 건/실패 건을 마지막에 알려줘.";
+      return [
+        "브로제이 자동등록 요청",
+        "",
+        "아래 JSON의 rows를 브로제이 캘린더에 순서대로 등록해줘.",
+        `모든 일정은 수업 유형 '${BROJ_LESSON_NAME}', 강사 ${BROJ_TRAINER_NAME} 기준으로 넣어줘.`,
+        `브로제이에 들어가는 시간은 시작시간 기준 ${BROJ_DURATION_MINUTES}분이야. 앱의 확보분은 충돌 계산용이라 브로제이 종료시간과 다를 수 있어.`,
+        "처리 후 resultContract 형식의 JSON을 돌려줘. 이 앱의 결과 반영 칸에 붙여넣으면 완료/검색실패가 다시 반영돼.",
+        modeLine,
+        "",
+        JSON.stringify(payload, null, 2)
       ].join("\n");
     }
 
     function renderBroj() {
-      const rows = getBrojRows().map((row) => Object.assign(row, { done: isBrojDone(row), key: brojRowKey(row) }));
+      const rows = getBrojRowsWithState();
+      const mode = state.brojMode === "live" ? "live" : "test";
+      const readyRows = rows.filter(isBrojReady);
+      const requestRows = rows.filter(isBrojRequestable);
+      const blockedRows = rows.filter((row) => !row.done && (!isBrojReady(row) || row.customerSearchStatus === "fail"));
+      const doneRows = rows.filter((row) => row.done);
       const visibleRows = state.hideDoneBroj ? rows.filter((row) => !row.done) : rows;
+      const searchUnknownRows = readyRows.filter((row) => row.customerSearchStatus === "unknown");
+      const searchOkRows = readyRows.filter((row) => row.customerSearchStatus === "ok");
+      const searchFailRows = readyRows.filter((row) => row.customerSearchStatus === "fail");
+      const modeDescription = mode === "live"
+        ? "실제 등록 모드입니다. 자동등록 요청에는 대표 PT 60분으로 저장까지 진행하라는 문구가 들어갑니다."
+        : "테스트 모드입니다. 자동등록 요청에는 저장하지 말고 고객 검색/입력 가능 여부만 확인하라는 문구가 들어갑니다.";
       document.getElementById("tab-broj").innerHTML = `
         <div class="panel-head">
           <div>
-            <h2>브로제이 등록 리스트</h2>
-            <p class="subtle">브로제이 일정 추가 창에 넣을 값을 한 건씩 복사합니다.</p>
+            <h2>브로제이 등록 대기열</h2>
+            <p class="subtle">확정된 일정만 모아 대표 PT 60분 기준으로 브로제이에 넘깁니다.</p>
           </div>
           <div class="panel-actions">
             <label class="inline-check">
@@ -2444,7 +3304,103 @@
             <button id="exportBrojCsv">브로제이 CSV</button>
           </div>
         </div>
-        <div class="table-wrap">
+        <div class="broj-mode-panel">
+          <div class="broj-mode-title">
+            <strong>브로제이 등록 모드</strong>
+            <span class="subtle">${escapeHtml(modeDescription)}</span>
+          </div>
+          <div class="segmented">
+            <button data-action="set-broj-mode" data-mode="test" class="${mode === "test" ? "active" : ""}">테스트</button>
+            <button data-action="set-broj-mode" data-mode="live" class="${mode === "live" ? "active" : ""}">실제 등록</button>
+          </div>
+        </div>
+        <div class="broj-readiness-grid">
+          <div class="broj-readiness-card">
+            <span>등록 요청 가능</span>
+            <strong>${requestRows.length}</strong>
+          </div>
+          <div class="broj-readiness-card">
+            <span>검색 확인 전</span>
+            <strong>${searchUnknownRows.length}</strong>
+          </div>
+          <div class="broj-readiness-card">
+            <span>검색 가능 확인</span>
+            <strong>${searchOkRows.length}</strong>
+          </div>
+          <div class="broj-readiness-card">
+            <span>검색 실패 예상</span>
+            <strong>${searchFailRows.length}</strong>
+          </div>
+        </div>
+        <div class="broj-queue-head">
+          <div class="broj-queue-card">
+            <div class="broj-queue-title">
+              <h3>${requestRows.length}건 등록 요청 가능</h3>
+              ${blockedRows.length ? `<span class="status-chip cancel">${blockedRows.length}건 확인 필요</span>` : `<span class="status-chip confirmed">확인 필요 없음</span>`}
+              ${doneRows.length ? `<span class="status-chip adjusted">${doneRows.length}건 완료</span>` : ""}
+            </div>
+            <div class="broj-queue-meta">
+              ${escapeHtml(weekRangeLabel())} · 완료 체크되지 않았고 시간겹침/확인필요/검색실패가 없는 일정만 자동등록 요청에 들어갑니다.
+            </div>
+          </div>
+          <div class="broj-queue-actions">
+            <button class="primary" id="copyBrojAutomationRequest" ${requestRows.length ? "" : "disabled"}>자동등록 요청 복사</button>
+            <button id="copyBrojAutomationJson" ${requestRows.length ? "" : "disabled"}>JSON 복사</button>
+            <button id="openBrojCrm">브로제이 열기</button>
+          </div>
+        </div>
+        <div class="broj-automation-panel">
+          <div class="broj-automation-grid">
+            <label>
+              Codex 결과 JSON
+              <textarea id="brojResultText" class="broj-result-textarea" placeholder='{"rows":[{"key":"...","status":"registered","message":""}]}' spellcheck="false">${escapeHtml(state.brojResultText || "")}</textarea>
+            </label>
+            <div class="broj-bulk-actions">
+              <button id="markUnknownBrojSearchOk" ${searchUnknownRows.length ? "" : "disabled"}>검색 전부 가능</button>
+              <button id="clearBrojSearchChecks" ${readyRows.length ? "" : "disabled"}>검색 초기화</button>
+              <button id="copyBrojResultTemplate" ${requestRows.length ? "" : "disabled"}>결과 양식 복사</button>
+              <button class="primary" id="applyBrojAutomationResult">결과 반영</button>
+              <button id="clearBrojAutomationResult">비우기</button>
+            </div>
+          </div>
+        </div>
+        <div class="broj-section-label">
+          <h3>등록 요청 큐</h3>
+          <span class="subtle">${requestRows.length}건</span>
+        </div>
+        ${requestRows.length ? `<div class="broj-quick-list">${requestRows.map(renderBrojQuickItem).join("")}</div>` : `<div class="empty">지금 바로 등록 요청에 넣을 일정이 없습니다.</div>`}
+        ${blockedRows.length ? `
+          <div class="broj-section-label">
+            <h3>확인 필요한 일정</h3>
+            <span class="subtle">${blockedRows.length}건</span>
+          </div>
+          <div class="table-wrap broj-blocked">
+            <table>
+              <thead>
+                <tr>
+                  <th>상태</th>
+                  <th>회원명</th>
+                  <th>날짜</th>
+                  <th>요일</th>
+                  <th>시작</th>
+                  <th>확보</th>
+                  <th>사용구간</th>
+                  <th>겹침</th>
+                  <th>메모</th>
+                  <th>검색상태</th>
+                  <th>확인용</th>
+                  <th>완료</th>
+                </tr>
+              </thead>
+              <tbody>${blockedRows.map(renderBrojRow).join("")}</tbody>
+            </table>
+          </div>
+        ` : ""}
+        <div class="broj-section-label">
+          <h3>전체 목록</h3>
+          <span class="subtle">${visibleRows.length}건</span>
+        </div>
+        <div class="table-wrap broj-all">
           <table>
             <thead>
               <tr>
@@ -2457,21 +3413,55 @@
                 <th>사용구간</th>
                 <th>겹침</th>
                 <th>메모</th>
+                <th>검색상태</th>
                 <th>브로제이 입력</th>
                 <th>완료</th>
               </tr>
             </thead>
             <tbody>
-              ${visibleRows.length ? visibleRows.map(renderBrojRow).join("") : `<tr><td colspan="11" class="empty">브로제이에 등록할 일정이 없습니다.</td></tr>`}
+              ${visibleRows.length ? visibleRows.map(renderBrojRow).join("") : `<tr><td colspan="12" class="empty">브로제이에 등록할 일정이 없습니다.</td></tr>`}
             </tbody>
           </table>
         </div>
       `;
     }
 
+    function renderBrojQuickItem(row) {
+      const searchStatus = row.customerSearchStatus || "unknown";
+      return `
+        <article class="broj-quick-item">
+          <div class="broj-quick-top">
+            <div>
+              <div class="broj-quick-name">${escapeHtml(row.name)}</div>
+              <div class="broj-quick-time">${escapeHtml(row.dateLabel)} ${escapeHtml(brojRegisteredTimeRange(row) || row.time)}</div>
+            </div>
+            <span class="status-chip ${brojSearchStatusClass(searchStatus)}">${escapeHtml(BROJ_SEARCH_LABELS[searchStatus] || BROJ_SEARCH_LABELS.unknown)}</span>
+          </div>
+          <div class="subtle">${escapeHtml(brojLessonName(row))} · 브로제이 ${BROJ_DURATION_MINUTES}분 · 확보 ${escapeHtml(row.duration)}분${row.note ? ` · ${escapeHtml(row.note)}` : ""}</div>
+          <div class="broj-quick-actions">
+            <button data-action="copy-broj-value" data-value="${escapeHtml(brojCopyLine(row))}">한건 복사</button>
+            <button data-action="copy-broj-json" data-key="${escapeHtml(row.key)}">JSON</button>
+            <button data-action="mark-broj-done" data-key="${escapeHtml(row.key)}">완료</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderBrojSearchState(row) {
+      const status = row.customerSearchStatus || "unknown";
+      return `
+        <div class="broj-search-state">
+          <span class="status-chip ${brojSearchStatusClass(status)}">${escapeHtml(BROJ_SEARCH_LABELS[status] || BROJ_SEARCH_LABELS.unknown)}</span>
+          <button data-action="set-broj-search" data-id="${escapeHtml(row.memberId)}" data-status="ok">가능</button>
+          <button data-action="set-broj-search" data-id="${escapeHtml(row.memberId)}" data-status="fail">실패</button>
+          ${status !== "unknown" ? `<button data-action="clear-broj-search" data-id="${escapeHtml(row.memberId)}">초기화</button>` : ""}
+        </div>
+      `;
+    }
+
     function renderBrojRow(row) {
-      const statusLabel = row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]);
-      const statusClass = row.conflict ? "cancel" : row.status;
+      const statusLabel = row.customerSearchStatus === "fail" ? "검색실패" : (row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]));
+      const statusClass = row.customerSearchStatus === "fail" ? "cancel" : (row.conflict ? "cancel" : row.status);
       return `
         <tr class="${row.conflict ? "conflict-row" : ""} ${row.done ? "broj-done-row" : ""}">
           <td><span class="status-chip ${statusClass}">${escapeHtml(statusLabel)}</span></td>
@@ -2483,13 +3473,15 @@
           <td>${escapeHtml(row.timeRange || "")}</td>
           <td>${row.conflict ? `<div class="conflict-detail">${escapeHtml(row.conflictNote)}</div>` : row.conflictIgnored ? `<span class="status-chip adjusted">경고 숨김</span>` : ""}</td>
           <td>${escapeHtml(row.note || "")}</td>
+          <td>${renderBrojSearchState(row)}</td>
           <td>
             <div class="broj-copy-actions">
               <button data-action="copy-broj-value" data-value="${escapeHtml(row.name)}">고객</button>
               <button data-action="copy-broj-value" data-value="${escapeHtml(brojLessonName(row))}">일정명</button>
               <button data-action="copy-broj-value" data-value="${escapeHtml(row.dateISO || "")}">날짜</button>
               <button data-action="copy-broj-value" data-value="${escapeHtml(row.time || "")}">시작</button>
-              <button data-action="copy-broj-value" data-value="${escapeHtml(row.endTime || "")}">종료</button>
+              <button data-action="copy-broj-value" data-value="${escapeHtml(brojRegisteredEndTime(row))}">종료</button>
+              <button data-action="copy-broj-value" data-value="${escapeHtml(brojRegisteredTimeRange(row))}">시간</button>
               <button data-action="copy-broj-value" data-value="${escapeHtml(brojCopyLine(row))}">한줄</button>
             </div>
           </td>
@@ -2520,42 +3512,40 @@
       return state.members.filter((member) => member.active || weekReview[member.id]);
     }
 
-    function getHistoryRows(weekStart = state.historyWeek || state.weekStart) {
-      const weekReview = state.reviews?.[weekStart] || {};
-      return getHistoryMembers(weekStart).map((member) => {
-        const review = weekReview[member.id] || {};
-        const durationOverrideCount = Object.keys(review.durationOverrides || {}).length;
-        const conflictIgnoreCount = Object.keys(review.conflictIgnores || {}).length;
-        const status = review.status || "pending";
-        return {
-          member,
-          status,
+	    function getHistoryRows(weekStart = state.historyWeek || state.weekStart) {
+	      const weekReview = state.reviews?.[weekStart] || {};
+	      return getHistoryMembers(weekStart).map((member) => {
+	        const review = weekReview[member.id] || {};
+	        const durationOverrideCount = Object.keys(review.durationOverrides || {}).length;
+	        const conflictIgnoreCount = Object.keys(review.conflictIgnores || {}).length;
+	        const status = normalizeStatus(review.status);
+	        return {
+	          member,
+	          status,
           statusLabel: STATUS_LABELS[status] || status,
           request: review.request || "",
           finalText: review.finalText || member.fixedText || "",
           note: review.note || "",
           customMessage: review.customMessage || "",
-          durationOverrideCount,
-          conflictIgnoreCount
-        };
-      }).sort((a, b) => {
-        const order = { change: 0, pending: 1, adjusted: 2, confirmed: 3, cancel: 4 };
-        return (order[a.status] ?? 5) - (order[b.status] ?? 5) || a.member.name.localeCompare(b.member.name);
-      });
-    }
+	          durationOverrideCount,
+	          conflictIgnoreCount
+	        };
+	      }).sort((a, b) => {
+	        const order = { pending: 0, change: 1, confirmed: 2 };
+	        return (order[a.status] ?? 5) - (order[b.status] ?? 5) || a.member.name.localeCompare(b.member.name);
+	      });
+	    }
 
-    function historyStatusCounts(weekStart = state.historyWeek || state.weekStart) {
-      const rows = getHistoryRows(weekStart);
-      const doneStatuses = ["confirmed", "adjusted", "cancel"];
-      return {
-        total: rows.length,
-        done: rows.filter((row) => doneStatuses.includes(row.status)).length,
-        needs: rows.filter((row) => !doneStatuses.includes(row.status)).length,
-        confirmed: rows.filter((row) => row.status === "confirmed").length,
-        adjusted: rows.filter((row) => row.status === "adjusted").length,
-        cancel: rows.filter((row) => row.status === "cancel").length
-      };
-    }
+	    function historyStatusCounts(weekStart = state.historyWeek || state.weekStart) {
+	      const rows = getHistoryRows(weekStart);
+	      const doneStatuses = ["confirmed"];
+	      return {
+	        total: rows.length,
+	        done: rows.filter((row) => doneStatuses.includes(row.status)).length,
+	        needs: rows.filter((row) => !doneStatuses.includes(row.status)).length,
+	        confirmed: rows.filter((row) => row.status === "confirmed").length
+	      };
+	    }
 
     function renderHistory() {
       const weeks = getHistoryWeeks();
@@ -2575,10 +3565,9 @@
                 ${weeks.map((week) => `<option value="${week}" ${week === state.historyWeek ? "selected" : ""}>${escapeHtml(getWeekLabel(week))}</option>`).join("")}
               </select>
             </label>
-            <button id="copyHistoryRows">이력 복사</button>
-            <button id="exportHistoryCsv">이력 CSV</button>
-          </div>
-        </div>
+	            <button id="copyHistoryRows">이력 복사</button>
+	            <button id="exportHistoryCsv">이력 CSV</button>
+	          </div>
         <div class="response-overview">
           <div class="response-pill">
             <span>전체 기록</span>
@@ -2588,15 +3577,11 @@
             <span>완료</span>
             <strong>${counts.done}</strong>
           </div>
-          <div class="response-pill needs">
-            <span>확인 필요</span>
-            <strong>${counts.needs}</strong>
-          </div>
-          <div class="response-pill">
-            <span>취소</span>
-            <strong>${counts.cancel}</strong>
-          </div>
-        </div>
+	          <div class="response-pill needs">
+	            <span>확인 필요</span>
+	            <strong>${counts.needs}</strong>
+	          </div>
+	        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -2625,7 +3610,7 @@
         row.conflictIgnoreCount ? `경고숨김 ${row.conflictIgnoreCount}개` : ""
       ].filter(Boolean).join(" · ");
       return `
-        <tr class="response-row ${["confirmed", "adjusted", "cancel"].includes(row.status) ? "done" : "needs"}">
+	        <tr class="response-row ${row.status === "confirmed" ? "done" : "needs"}">
           <td><strong>${escapeHtml(row.member.name)}</strong><br><span class="subtle">${escapeHtml(row.member.active ? TYPE_LABELS[row.member.type] || "" : "정지/비활성")}</span></td>
           <td><span class="status-chip ${escapeHtml(row.status)}">${escapeHtml(row.statusLabel)}</span></td>
           <td class="wide">${escapeHtml(row.finalText || "-")}</td>
@@ -2682,7 +3667,7 @@
     function updateReview(id, field, value) {
       const review = getWeekReview();
       if (!review[id]) review[id] = {};
-      review[id][field] = value;
+      review[id][field] = field === "status" ? normalizeStatus(value) : value;
       saveState();
       renderMetrics();
     }
@@ -2818,16 +3803,18 @@
     }
 
     function exportBrojCsv() {
-      const headers = ["등록완료", "상태", "회원명", "일정명", "날짜", "요일", "시작", "종료", "확보분", "사용구간", "겹침", "메모"];
-      const rows = getBrojRows().map((row) => [
-        isBrojDone(row) ? "Y" : "N",
-        row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]),
+      const headers = ["등록완료", "상태", "검색상태", "회원명", "일정명", "날짜", "요일", "시작", "브로제이종료", "브로제이분", "확보분", "사용구간", "겹침", "메모"];
+      const rows = getBrojRowsWithState().map((row) => [
+        row.done ? "Y" : "N",
+        row.customerSearchStatus === "fail" ? "검색실패" : (row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status])),
+        BROJ_SEARCH_LABELS[row.customerSearchStatus] || BROJ_SEARCH_LABELS.unknown,
         row.name,
         brojLessonName(row),
         row.dateISO,
         row.day,
         row.time,
-        row.endTime || "",
+        brojRegisteredEndTime(row),
+        BROJ_DURATION_MINUTES,
         row.duration,
         row.timeRange || "",
         row.conflictNote || "",
@@ -2837,22 +3824,176 @@
     }
 
     function copyBrojRows() {
-      const headers = ["등록완료", "상태", "회원명", "일정명", "날짜", "요일", "시작", "종료", "확보", "사용구간", "겹침", "메모"];
-      const rows = getBrojRows().map((row) => [
-        isBrojDone(row) ? "Y" : "N",
-        row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status]),
+      const headers = ["등록완료", "상태", "검색상태", "회원명", "일정명", "날짜", "요일", "시작", "브로제이종료", "브로제이분", "확보", "사용구간", "겹침", "메모"];
+      const rows = getBrojRowsWithState().map((row) => [
+        row.done ? "Y" : "N",
+        row.customerSearchStatus === "fail" ? "검색실패" : (row.conflict ? "시간겹침" : (row.needsCheck ? "확인필요" : STATUS_LABELS[row.status])),
+        BROJ_SEARCH_LABELS[row.customerSearchStatus] || BROJ_SEARCH_LABELS.unknown,
         row.name,
         brojLessonName(row),
         row.dateLabel || row.dateISO,
         row.day,
         row.time,
-        row.endTime || "",
+        brojRegisteredEndTime(row),
+        `${BROJ_DURATION_MINUTES}분`,
         `${row.duration}분`,
         row.timeRange || "",
         row.conflictNote || "",
         row.note || ""
       ]);
       copyText([headers, ...rows].map((row) => row.join("\t")).join("\n"), "브로제이 표를 복사했습니다.");
+    }
+
+    function getBrojRowsWithState() {
+      return getBrojRows().map((row) => Object.assign(row, {
+        done: isBrojDone(row),
+        key: brojRowKey(row),
+        customerSearchStatus: getBrojCustomerCheck(row.memberId)
+      }));
+    }
+
+    function copyBrojAutomationRequest() {
+      const readyRows = brojAutomationRows(getBrojRowsWithState());
+      if (!readyRows.length) {
+        showToast("자동등록 가능한 일정이 없습니다.");
+        return;
+      }
+      copyText(brojAutomationRequest(readyRows), "브로제이 자동등록 요청을 복사했습니다.");
+    }
+
+    function copyBrojAutomationJson() {
+      const readyRows = brojAutomationRows(getBrojRowsWithState());
+      if (!readyRows.length) {
+        showToast("자동등록 가능한 일정이 없습니다.");
+        return;
+      }
+      copyText(JSON.stringify(brojAutomationPayload(readyRows), null, 2), "브로제이 JSON을 복사했습니다.");
+    }
+
+    function copyBrojRowJson(key) {
+      const row = getBrojRowsWithState().find((item) => item.key === key);
+      if (!row) return;
+      copyText(JSON.stringify(brojAutomationRows([row])[0] || row, null, 2), "한 건 JSON을 복사했습니다.");
+    }
+
+    function copyBrojResultTemplate() {
+      const readyRows = brojAutomationRows(getBrojRowsWithState());
+      if (!readyRows.length) {
+        showToast("결과 양식을 만들 일정이 없습니다.");
+        return;
+      }
+      copyText(JSON.stringify(brojAutomationResultTemplate(readyRows), null, 2), "브로제이 결과 양식을 복사했습니다.");
+    }
+
+    function clearBrojAutomationResult() {
+      state.brojResultText = "";
+      saveState();
+      renderBroj();
+    }
+
+    function getBrojResultRows(payload) {
+      if (Array.isArray(payload)) return payload;
+      if (!payload || typeof payload !== "object") return [];
+      if (Array.isArray(payload.rows)) return payload.rows;
+      if (Array.isArray(payload.results)) return payload.results;
+      if (Array.isArray(payload.items)) return payload.items;
+      return [];
+    }
+
+    function normalizeBrojResultStatus(result, payloadMode) {
+      const raw = String(result.status || result.result || result.state || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+      if (result.registered === true || result.saved === true) return "registered";
+      if (["registered", "saved", "done", "completed", "complete"].includes(raw)) return "registered";
+      if (["search_ok", "customer_found", "found", "available", "input_ready"].includes(raw)) return "search_ok";
+      if (["search_failed", "customer_not_found", "not_found", "notfound", "failed_search", "no_customer"].includes(raw)) return "search_failed";
+      if (["skipped", "skip"].includes(raw)) return "skipped";
+      if (["error", "failed", "fail"].includes(raw)) return "error";
+      if (["ok", "success", "succeeded"].includes(raw)) return payloadMode === "live" ? "registered" : "search_ok";
+      if (result.customerSearchStatus === "ok" || result.searchStatus === "ok") return "search_ok";
+      if (result.customerSearchStatus === "fail" || result.searchStatus === "fail") return "search_failed";
+      return raw || "error";
+    }
+
+    function findBrojRowForResult(result, rows) {
+      const key = String(result.key || result.rowKey || result.id || "").trim();
+      if (key) {
+        const byKey = rows.find((row) => row.key === key);
+        if (byKey) return byKey;
+      }
+      const member = String(result.member || result.name || result.customer || "").trim();
+      const date = String(result.date || result.dateISO || result.dayDate || "").trim();
+      const start = String(result.start || result.time || result.startTime || "").trim();
+      return rows.find((row) => row.name === member && row.dateISO === date && row.time === start);
+    }
+
+    function applyBrojAutomationResult() {
+      const text = textareaValue("brojResultText", state.brojResultText || "").trim();
+      if (!text) {
+        showToast("반영할 결과 JSON이 없습니다.");
+        return;
+      }
+
+      let payload;
+      try {
+        payload = JSON.parse(text);
+      } catch (error) {
+        showToast("결과 JSON 형식을 확인해주세요.");
+        return;
+      }
+
+      const resultRows = getBrojResultRows(payload);
+      if (!resultRows.length) {
+        showToast("결과 rows가 없습니다.");
+        return;
+      }
+
+      const currentRows = getBrojRowsWithState();
+      const doneMap = getBrojDoneMap();
+      if (!state.brojCustomerChecks) state.brojCustomerChecks = {};
+
+      const payloadMode = payload.mode === "live" || payload.mode === "test" ? payload.mode : (state.brojMode || "test");
+      const counts = { registered: 0, searchOk: 0, searchFailed: 0, skipped: 0, error: 0, unmatched: 0 };
+
+      resultRows.forEach((result) => {
+        const row = findBrojRowForResult(result || {}, currentRows);
+        if (!row) {
+          counts.unmatched += 1;
+          return;
+        }
+
+        const status = normalizeBrojResultStatus(result || {}, payloadMode);
+        if (status === "registered") {
+          doneMap[row.key] = true;
+          state.brojCustomerChecks[row.memberId] = "ok";
+          counts.registered += 1;
+          return;
+        }
+
+        if (status === "search_ok") {
+          state.brojCustomerChecks[row.memberId] = "ok";
+          counts.searchOk += 1;
+          return;
+        }
+
+        if (status === "search_failed") {
+          delete doneMap[row.key];
+          state.brojCustomerChecks[row.memberId] = "fail";
+          counts.searchFailed += 1;
+          return;
+        }
+
+        if (status === "skipped") {
+          counts.skipped += 1;
+          return;
+        }
+
+        counts.error += 1;
+      });
+
+      state.brojResultText = text;
+      saveState();
+      renderBroj();
+      showToast(`완료 ${counts.registered} · 검색가능 ${counts.searchOk} · 검색실패 ${counts.searchFailed} · 미매칭 ${counts.unmatched}`);
     }
 
     function copyAllMessages() {
@@ -2865,7 +4006,7 @@
       const summary = [
         `짐로드 주간 스케줄 ${weekRangeLabel()}`,
         `확인 대상: ${item.total}명`,
-        `확정/반영: ${item.confirmed}명`,
+	        `확정: ${item.confirmed}명`,
         `확인 필요: ${item.pending}명`,
         `시간 충돌: ${item.conflicts}건`
       ].join("\n");
@@ -3115,7 +4256,14 @@
       render();
     }
 
-    function applyChatFinal() {
+    function setChatMode(mode) {
+      if (!CHAT_MODES.some((item) => item.value === mode)) return;
+      state.chatMode = mode;
+      saveState();
+      render();
+    }
+
+    function applyChatFinal(options = {}) {
       const member = getChatMember();
       if (!member) return;
       const review = getReview(member.id);
@@ -3124,17 +4272,40 @@
         showToast("먼저 최종 일정을 입력해주세요.");
         return;
       }
+      if (!options.skipSameDayChoice && maybeOpenSameDayChoice(member, "apply", finalText)) return;
+      if (!options.skipScheduleChoice && maybeOpenScheduleChoice(member, "apply")) return;
       const hasConflict = getCandidateConflictChecks(member).some((check) => check.conflicts.length > 0);
       review.finalText = finalText;
-      review.status = finalText === (member.fixedText || "") ? "confirmed" : "adjusted";
+      review.status = "confirmed";
       saveState();
       render();
       showToast(hasConflict ? "최종 일정에 반영했습니다. 시간 겹침을 확인해주세요." : "최종 일정에 반영했습니다. 겹침 없음.");
     }
 
+    function confirmChatMember(options = {}) {
+      const member = getChatMember();
+      if (!member) return;
+      const review = getReview(member.id);
+      const finalText = (state.chatCandidateText || review.finalText || member.fixedText || "").trim();
+      if (finalText && !options.skipSameDayChoice && maybeOpenSameDayChoice(member, "confirm", finalText)) return;
+      if (finalText && !options.skipScheduleChoice && maybeOpenScheduleChoice(member, "confirm")) return;
+      if (finalText) review.finalText = finalText;
+      review.status = "confirmed";
+      const hasConflict = getCandidateConflictChecks(member).some((check) => check.conflicts.length > 0);
+      saveState();
+      render();
+      showToast(hasConflict
+        ? `${member.name}님 확정 · 브로제이 대기열에 추가. 시간 겹침을 확인해주세요.`
+        : `${member.name}님 확정했습니다. 브로제이 등록 대기열에 들어갑니다.`);
+    }
+
     function appendChatCandidate(value) {
+      if (!value) return;
+      const member = getChatMember();
       const current = (state.chatCandidateText || "").trim();
-      state.chatCandidateText = current && !current.includes(value) ? `${current}, ${value}` : value;
+      const proposedText = current ? (current.includes(value) ? current : `${current}, ${value}`) : value;
+      if (member && maybeOpenSameDayChoice(member, "append", proposedText)) return;
+      state.chatCandidateText = proposedText;
       saveState();
       render();
     }
@@ -3145,6 +4316,10 @@
         showToast("회원 답변에서 이번 주 일정 시간을 찾지 못했습니다.");
         return;
       }
+      const member = getChatMember();
+      const current = (state.chatCandidateText || "").trim();
+      const proposedText = current ? `${current}, ${parsedText}` : parsedText;
+      if (member && maybeOpenSameDayChoice(member, "parse", proposedText)) return;
       state.chatCandidateText = parsedText;
       state.chatMode = "confirm";
       saveState();
@@ -3153,6 +4328,10 @@
     }
 
     document.addEventListener("click", (event) => {
+      if (event.target.id === "scheduleChoiceModal") {
+        closeScheduleChoiceModal();
+        return;
+      }
       const target = event.target.closest("button");
       if (!target) return;
 
@@ -3164,9 +4343,18 @@
 
       const action = target.dataset.action;
       const id = target.dataset.id;
+      if (action === "resolve-schedule-choice") {
+        resolveScheduleChoice(target.dataset.choice || "");
+        return;
+      }
+      if (action === "close-schedule-choice") {
+        closeScheduleChoiceModal();
+        return;
+      }
       if (action === "delete-member") deleteMember(id);
       if (action === "duplicate-member") duplicateMember(id);
       if (action === "select-chat-member") setChatMember(id);
+      if (action === "set-chat-mode") setChatMode(target.dataset.mode || "confirm");
       if (action === "use-candidate") appendChatCandidate(target.dataset.value || "");
       if (action === "copy-message") {
         const member = state.members.find((item) => item.id === id);
@@ -3185,9 +4373,15 @@
         if (member) resetCustomMessage(member.id);
       }
       if (action === "apply-chat-final") applyChatFinal();
+      if (action === "confirm-chat-final") confirmChatMember();
       if (action === "reset-duration-override") resetDurationOverride(id, target.dataset.key || "");
       if (action === "remove-candidate-slot") removeCandidateSlot(id, target.dataset.key || "");
       if (action === "copy-broj-value") copyText(target.dataset.value || "", "브로제이 입력값을 복사했습니다.");
+      if (action === "copy-broj-json") copyBrojRowJson(target.dataset.key || "");
+      if (action === "mark-broj-done") setBrojDone(target.dataset.key || "", true);
+      if (action === "set-broj-mode") setBrojMode(target.dataset.mode || "test");
+      if (action === "set-broj-search") setBrojCustomerCheck(id, target.dataset.status || "");
+      if (action === "clear-broj-search") setBrojCustomerCheck(id, "");
       if (action === "set-status") {
         updateReview(id, "status", target.dataset.status);
         render();
@@ -3212,7 +4406,15 @@
       if (target.id === "markFixedConfirmed") markFixedConfirmed();
       if (target.id === "resetWeekResponses") resetWeekResponses();
       if (target.id === "copyBrojRows") copyBrojRows();
+      if (target.id === "copyBrojAutomationRequest") copyBrojAutomationRequest();
+      if (target.id === "copyBrojAutomationJson") copyBrojAutomationJson();
+      if (target.id === "copyBrojResultTemplate") copyBrojResultTemplate();
+      if (target.id === "applyBrojAutomationResult") applyBrojAutomationResult();
+      if (target.id === "clearBrojAutomationResult") clearBrojAutomationResult();
+      if (target.id === "markUnknownBrojSearchOk") markUnknownBrojSearchOk();
+      if (target.id === "clearBrojSearchChecks") clearBrojSearchChecks();
       if (target.id === "exportBrojCsv") exportBrojCsv();
+      if (target.id === "openBrojCrm") window.open(BROJ_CRM_URL, "_blank");
       if (target.id === "copyHistoryRows") copyHistoryRows();
       if (target.id === "exportHistoryCsv") exportHistoryCsv();
       if (target.id === "openDeployGuide") window.open("DEPLOY.md", "_blank");
@@ -3256,6 +4458,10 @@
         saveState();
         updateChatParsePreview();
       }
+      if (target.id === "brojResultText") {
+        state.brojResultText = target.value;
+        saveState();
+      }
       if (target.dataset.durationOverrideId && target.dataset.durationKey) {
         setDurationOverride(target.dataset.durationOverrideId, target.dataset.durationKey, target.value);
         updateConflictOnlyPreview();
@@ -3278,16 +4484,20 @@
       window.clearTimeout(memberSearchRenderTimer);
     });
 
-    document.addEventListener("compositionend", (event) => {
-      const target = event.target;
-      if (target.id !== "memberSearch") return;
-      memberSearchComposing = false;
-      state.memberSearch = target.value;
+	    document.addEventListener("compositionend", (event) => {
+	      const target = event.target;
+	      if (target.id !== "memberSearch") return;
+	      memberSearchComposing = false;
+	      state.memberSearch = target.value;
       saveState();
-      scheduleMemberSearchRender(180);
+	      scheduleMemberSearchRender(180);
+	    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && pendingScheduleChoice) closeScheduleChoiceModal();
     });
 
-    document.addEventListener("change", (event) => {
+	    document.addEventListener("change", (event) => {
       const target = event.target;
       if (target.id === "weekStart") {
         state.weekStart = target.value || toISODate(getNextMonday(new Date()));
@@ -3304,12 +4514,7 @@
       if (target.id === "chatMemberSelect") {
         setChatMember(target.value);
       }
-      if (target.id === "chatMode") {
-        state.chatMode = target.value;
-        saveState();
-        render();
-      }
-      if (target.id === "includePendingBroj") {
+	      if (target.id === "includePendingBroj") {
         state.includePendingBroj = target.checked;
         saveState();
         render();
