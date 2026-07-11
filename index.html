@@ -1242,6 +1242,176 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    .calendar-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+    }
+
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .calendar-nav strong {
+      min-width: 108px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .calendar-body {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .calendar-dow,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .calendar-dow span {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      padding: 2px 0;
+    }
+
+    .calendar-dow span.sun,
+    .calendar-cell.sun .num {
+      color: var(--red);
+    }
+
+    .calendar-dow span.sat,
+    .calendar-cell.sat .num {
+      color: var(--blue);
+    }
+
+    .calendar-cell {
+      min-height: 56px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 4px 0;
+    }
+
+    .calendar-cell.blank {
+      border: none;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    .calendar-cell .num {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .calendar-cell.today {
+      border-color: var(--line);
+      background: var(--surface-2);
+    }
+
+    .calendar-cell.selected {
+      border-color: var(--green);
+      background: rgba(47, 101, 74, 0.1);
+    }
+
+    .calendar-dots {
+      font-size: 7px;
+      color: var(--green);
+      letter-spacing: 2px;
+      min-height: 10px;
+      line-height: 1.4;
+    }
+
+    .calendar-day-panel {
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .calendar-day-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .calendar-day-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      flex-wrap: wrap;
+    }
+
+    .calendar-day-row strong {
+      min-width: 46px;
+    }
+
+    .calendar-day-row .grow {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .calendar-chip {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .calendar-chip.confirmed {
+      background: rgba(47, 101, 74, 0.12);
+      color: var(--green);
+    }
+
+    .calendar-chip.manual {
+      background: rgba(65, 105, 137, 0.12);
+      color: var(--blue);
+    }
+
+    .calendar-form {
+      border: 1px solid var(--green);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: grid;
+      gap: 10px;
+      background: #fbfcf8;
+    }
+
+    .calendar-form-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .calendar-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
     @media (max-width: 1040px) {
       .topbar {
         grid-template-columns: 1fr;
@@ -1378,6 +1548,7 @@
 
     <nav class="tabs" aria-label="작업 탭">
       <button class="tab active" data-tab="members">회원표</button>
+      <button class="tab" data-tab="calendar">캘린더</button>
       <button class="tab" data-tab="chat">카톡작업</button>
       <button class="tab" data-tab="messages">카톡문구</button>
       <button class="tab" data-tab="responses">응답정리</button>
@@ -1402,6 +1573,7 @@
       <section class="sync-strip" id="syncPanel"></section>
 
       <section class="panel" id="tab-members"></section>
+      <section class="panel hidden" id="tab-calendar"></section>
       <section class="panel hidden" id="tab-chat"></section>
       <section class="panel hidden" id="tab-messages"></section>
       <section class="panel hidden" id="tab-responses"></section>
@@ -1451,6 +1623,9 @@
     }, window.GYMLORD_SUPABASE || {});
 
     let activeTab = "members";
+    let calendarMonth = "";
+    let calendarSelectedDate = "";
+    let calendarFormOpen = false;
     let memberSearchRenderTimer = null;
     let memberSearchComposing = false;
     let supabaseClient = null;
@@ -1537,6 +1712,7 @@
         chatMode: "confirm",
         chatCandidateText: "",
         chatPasteText: "",
+        calendarEvents: [],
         historyWeek: weekStart,
 	        durationMigratedToBuffer: true
 	      };
@@ -1567,6 +1743,20 @@
 	      next.brojMode = parsed.brojMode === "live" ? "live" : "test";
 	      next.brojCustomerChecks = parsed.brojCustomerChecks && typeof parsed.brojCustomerChecks === "object" ? parsed.brojCustomerChecks : {};
 	      next.brojResultText = typeof parsed.brojResultText === "string" ? parsed.brojResultText : "";
+	      next.calendarEvents = Array.isArray(parsed.calendarEvents)
+	        ? parsed.calendarEvents
+	            .filter((event) => event && typeof event === "object" && event.date && event.time && (event.name || event.memberId))
+	            .map((event) => ({
+	              id: event.id || makeId(),
+	              date: String(event.date),
+	              time: String(event.time),
+	              memberId: event.memberId || "",
+	              name: event.name || "",
+	              type: event.type || "PT",
+	              trainer: event.trainer || "",
+	              memo: event.memo || ""
+	            }))
+	        : [];
 	      if (!CHAT_MODES.some((mode) => mode.value === next.chatMode)) next.chatMode = "confirm";
       next.members.forEach((member) => {
         if (!member.duration || member.duration === 50) member.duration = 80;
@@ -1974,6 +2164,7 @@
       renderSyncPanel();
       renderTabs();
       if (activeTab === "members") renderMembers();
+      if (activeTab === "calendar") renderCalendar();
       if (activeTab === "chat") renderChatWork();
       if (activeTab === "messages") renderMessages();
       if (activeTab === "responses") renderResponses();
@@ -1985,7 +2176,7 @@
       document.querySelectorAll(".tab").forEach((button) => {
         button.classList.toggle("active", button.dataset.tab === activeTab);
       });
-      ["members", "chat", "messages", "responses", "broj", "history"].forEach((tab) => {
+      ["members", "calendar", "chat", "messages", "responses", "broj", "history"].forEach((tab) => {
         document.getElementById(`tab-${tab}`).classList.toggle("hidden", tab !== activeTab);
       });
     }
@@ -3641,6 +3832,225 @@
       copyText([headers, ...historyRowsForExport()].map((row) => row.join("\t")).join("\n"), "주차 이력을 복사했습니다.");
     }
 
+    const CALENDAR_EVENT_TYPES = ["PT", "OT", "상담", "개인"];
+
+    function getCalendarEvents() {
+      if (!Array.isArray(state.calendarEvents)) state.calendarEvents = [];
+      return state.calendarEvents;
+    }
+
+    function getConfirmedCalendarSlots() {
+      const slots = [];
+      const seen = new Set();
+      Object.entries(state.reviews || {}).forEach(([weekKey, weekReview]) => {
+        Object.entries(weekReview || {}).forEach(([memberId, review]) => {
+          if (!review || normalizeStatus(review.status) !== "confirmed") return;
+          const member = state.members.find((item) => item.id === memberId);
+          if (!member) return;
+          parseScheduleText(review.finalText || member.fixedText || "", weekKey).forEach((slot) => {
+            const key = `${memberId}|${slot.dateISO}|${slot.time}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+            slots.push({ kind: "confirmed", date: slot.dateISO, time: slot.time, name: member.name, type: "PT", trainer: "", memo: "" });
+          });
+        });
+      });
+      return slots;
+    }
+
+    function buildCalendarEventMap() {
+      const map = {};
+      getConfirmedCalendarSlots().forEach((item) => {
+        (map[item.date] = map[item.date] || []).push(item);
+      });
+      getCalendarEvents().forEach((event) => {
+        const member = event.memberId ? state.members.find((item) => item.id === event.memberId) : null;
+        (map[event.date] = map[event.date] || []).push(Object.assign({ kind: "manual" }, event, { name: event.name || member?.name || "" }));
+      });
+      Object.values(map).forEach((list) => list.sort((a, b) => (a.time || "").localeCompare(b.time || "")));
+      return map;
+    }
+
+    function calendarDateLabel(dateISO) {
+      const date = parseISODate(dateISO);
+      return `${date.getMonth() + 1}월 ${date.getDate()}일 (${DAYS[(date.getDay() + 6) % 7]})`;
+    }
+
+    function renderCalendar() {
+      const todayISO = toISODate(new Date());
+      if (!calendarSelectedDate) calendarSelectedDate = todayISO;
+      if (!calendarMonth) calendarMonth = calendarSelectedDate.slice(0, 7);
+      const [year, month] = calendarMonth.split("-").map(Number);
+      const eventMap = buildCalendarEventMap();
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const leadingBlanks = new Date(year, month - 1, 1).getDay();
+      const cells = [];
+      for (let i = 0; i < leadingBlanks; i += 1) {
+        cells.push(`<div class="calendar-cell blank"></div>`);
+      }
+      for (let day = 1; day <= daysInMonth; day += 1) {
+        const dateISO = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const count = (eventMap[dateISO] || []).length;
+        const dow = new Date(year, month - 1, day).getDay();
+        const classes = [
+          "calendar-cell",
+          dateISO === calendarSelectedDate ? "selected" : "",
+          dateISO === todayISO ? "today" : "",
+          dow === 0 ? "sun" : "",
+          dow === 6 ? "sat" : ""
+        ].filter(Boolean).join(" ");
+        cells.push(`
+          <button type="button" class="${classes}" data-action="select-calendar-date" data-date="${dateISO}" aria-label="${month}월 ${day}일">
+            <span class="num">${day}</span>
+            <span class="calendar-dots">${count ? "●".repeat(Math.min(count, 3)) : ""}</span>
+          </button>
+        `);
+      }
+      const dayItems = eventMap[calendarSelectedDate] || [];
+      const selectedLabel = calendarDateLabel(calendarSelectedDate);
+      const formHtml = calendarFormOpen ? `
+        <div class="calendar-form" id="calendarForm">
+          <div class="calendar-form-head">
+            <h3>일정 추가</h3>
+            <button class="icon-only" data-action="close-calendar-form" aria-label="닫기">x</button>
+          </div>
+          <div class="calendar-form-grid">
+            <label>날짜<input id="calEventDate" type="date" value="${escapeHtml(calendarSelectedDate)}"></label>
+            <label>시간<input id="calEventTime" type="time" value="19:00"></label>
+            <label>회원<select id="calEventMember">
+              <option value="">직접 입력 (비회원·상담 등)</option>
+              ${getActiveMembers().map((member) => `<option value="${escapeHtml(member.id)}">${escapeHtml(member.name)}</option>`).join("")}
+            </select></label>
+            <label>이름 (직접 입력 시)<input id="calEventName" type="text" placeholder="예: 상담 홍OO"></label>
+            <label>유형<select id="calEventType">${CALENDAR_EVENT_TYPES.map((type) => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join("")}</select></label>
+            <label>담당강사<input id="calEventTrainer" type="text" value="${escapeHtml(state.trainerName || "")}" placeholder="담당강사명"></label>
+          </div>
+          <label>메모<input id="calEventMemo" type="text" placeholder="예: 재등록 상담 겸"></label>
+          <div class="panel-actions">
+            <button class="primary" id="saveCalendarEvent">저장</button>
+            <button id="cancelCalendarEvent">취소</button>
+          </div>
+        </div>
+      ` : "";
+      document.getElementById("tab-calendar").innerHTML = `
+        <div class="panel-head">
+          <div>
+            <h2>캘린더</h2>
+            <p class="subtle">확정된 주간 일정과 직접 추가한 일정을 달력으로 봅니다. 날짜를 누르면 그날 일정이 아래에 표시됩니다.</p>
+          </div>
+          <div class="panel-actions">
+            <button class="primary" data-action="open-calendar-form">+ 일정추가</button>
+          </div>
+        </div>
+        <div class="calendar-toolbar">
+          <div class="calendar-nav">
+            <button class="icon-only" data-action="calendar-shift-month" data-step="-1" aria-label="이전 달">&lt;</button>
+            <strong>${year}년 ${month}월</strong>
+            <button class="icon-only" data-action="calendar-shift-month" data-step="1" aria-label="다음 달">&gt;</button>
+          </div>
+          <button class="ghost" data-action="calendar-today">오늘</button>
+        </div>
+        <div class="calendar-body">
+          <div class="calendar-dow">
+            <span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span>
+          </div>
+          <div class="calendar-grid">${cells.join("")}</div>
+          <div class="calendar-day-panel">
+            <div class="calendar-day-head">
+              <strong>${escapeHtml(selectedLabel)}</strong>
+              <span class="subtle">${dayItems.length ? `일정 ${dayItems.length}건` : "일정 없음"}</span>
+            </div>
+            ${dayItems.length ? dayItems.map(renderCalendarDayRow).join("") : `<p class="subtle">등록된 일정이 없습니다.</p>`}
+            <button data-action="open-calendar-form" data-date="${escapeHtml(calendarSelectedDate)}">+ ${escapeHtml(selectedLabel.split(" (")[0])}에 일정 추가</button>
+            ${formHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCalendarDayRow(item) {
+      const meta = [
+        item.kind === "manual" && item.trainer ? `강사 ${item.trainer}` : "",
+        item.memo || ""
+      ].filter(Boolean).join(" · ");
+      return `
+        <div class="calendar-day-row">
+          <strong>${escapeHtml(item.time || "-")}</strong>
+          <span class="grow">${escapeHtml(item.name || "-")}${meta ? `<br><span class="subtle">${escapeHtml(meta)}</span>` : ""}</span>
+          <span class="calendar-chip">${escapeHtml(item.type || "PT")}</span>
+          <span class="calendar-chip ${item.kind === "manual" ? "manual" : "confirmed"}">${item.kind === "manual" ? "직접추가" : "주간확정"}</span>
+          ${item.kind === "manual" ? `<button class="icon-only danger" data-action="delete-calendar-event" data-id="${escapeHtml(item.id)}" title="삭제" aria-label="일정 삭제">x</button>` : ""}
+        </div>
+      `;
+    }
+
+    function shiftCalendarMonth(step) {
+      const [year, month] = (calendarMonth || toISODate(new Date()).slice(0, 7)).split("-").map(Number);
+      const next = new Date(year, month - 1 + step, 1);
+      calendarMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
+      renderCalendar();
+    }
+
+    function openCalendarForm(dateISO) {
+      if (dateISO) {
+        calendarSelectedDate = dateISO;
+        calendarMonth = dateISO.slice(0, 7);
+      }
+      calendarFormOpen = true;
+      renderCalendar();
+      document.getElementById("calendarForm")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function closeCalendarForm() {
+      calendarFormOpen = false;
+      renderCalendar();
+    }
+
+    function saveCalendarEvent() {
+      const date = document.getElementById("calEventDate")?.value || "";
+      const time = document.getElementById("calEventTime")?.value || "";
+      const memberId = document.getElementById("calEventMember")?.value || "";
+      const nameInput = (document.getElementById("calEventName")?.value || "").trim();
+      const type = document.getElementById("calEventType")?.value || "PT";
+      const trainer = (document.getElementById("calEventTrainer")?.value || "").trim();
+      const memo = (document.getElementById("calEventMemo")?.value || "").trim();
+      if (!date || !time) {
+        showToast("날짜와 시간을 입력해주세요.");
+        return;
+      }
+      const member = state.members.find((item) => item.id === memberId);
+      const name = member ? member.name : nameInput;
+      if (!name) {
+        showToast("회원을 선택하거나 이름을 입력해주세요.");
+        return;
+      }
+      getCalendarEvents().push({
+        id: makeId(),
+        date,
+        time,
+        memberId: member ? member.id : "",
+        name,
+        type,
+        trainer,
+        memo
+      });
+      calendarSelectedDate = date;
+      calendarMonth = date.slice(0, 7);
+      calendarFormOpen = false;
+      saveState();
+      renderCalendar();
+      showToast("일정을 추가했습니다.");
+    }
+
+    function deleteCalendarEvent(eventId) {
+      if (!eventId) return;
+      if (!confirm("이 일정을 삭제할까요?")) return;
+      state.calendarEvents = getCalendarEvents().filter((event) => event.id !== eventId);
+      saveState();
+      renderCalendar();
+      showToast("일정을 삭제했습니다.");
+    }
+
     function exportHistoryCsv() {
       const headers = ["주차", "회원명", "상태", "최종일정", "요청내용", "등록메모", "저장문구", "예외확보분", "경고숨김"];
       const rows = historyRowsForExport();
@@ -4382,6 +4792,19 @@
       if (action === "set-broj-mode") setBrojMode(target.dataset.mode || "test");
       if (action === "set-broj-search") setBrojCustomerCheck(id, target.dataset.status || "");
       if (action === "clear-broj-search") setBrojCustomerCheck(id, "");
+      if (action === "select-calendar-date") {
+        calendarSelectedDate = target.dataset.date || calendarSelectedDate;
+        renderCalendar();
+      }
+      if (action === "calendar-shift-month") shiftCalendarMonth(Number(target.dataset.step || 0));
+      if (action === "calendar-today") {
+        calendarSelectedDate = toISODate(new Date());
+        calendarMonth = calendarSelectedDate.slice(0, 7);
+        renderCalendar();
+      }
+      if (action === "open-calendar-form") openCalendarForm(target.dataset.date || "");
+      if (action === "close-calendar-form") closeCalendarForm();
+      if (action === "delete-calendar-event") deleteCalendarEvent(target.dataset.id || "");
       if (action === "set-status") {
         updateReview(id, "status", target.dataset.status);
         render();
@@ -4417,6 +4840,8 @@
       if (target.id === "openBrojCrm") window.open(BROJ_CRM_URL, "_blank");
       if (target.id === "copyHistoryRows") copyHistoryRows();
       if (target.id === "exportHistoryCsv") exportHistoryCsv();
+      if (target.id === "saveCalendarEvent") saveCalendarEvent();
+      if (target.id === "cancelCalendarEvent") closeCalendarForm();
       if (target.id === "openDeployGuide") window.open("DEPLOY.md", "_blank");
       if (target.id === "signInGoogle") signInWithGoogle();
       if (target.id === "sendMagicLink") sendEmailLoginLink();
