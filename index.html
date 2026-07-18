@@ -603,6 +603,10 @@
       grid-column: span 3;
     }
 
+    .chat-compose-grid .field-2 {
+      grid-column: span 2;
+    }
+
     .chat-mode-field {
       display: grid;
       grid-column: span 2;
@@ -1456,7 +1460,8 @@
         grid-template-columns: 1fr;
       }
 
-      .chat-compose-grid .wide-field {
+      .chat-compose-grid .wide-field,
+      .chat-compose-grid .field-2 {
         grid-column: auto;
       }
 
@@ -3065,54 +3070,58 @@
               <div class="mini-panel">
                 <div class="mini-panel-head">
                   <div>
-                    <h3>${escapeHtml(selected.name)}</h3>
+                    <h3>일정 확정 · ${escapeHtml(selected.name)}</h3>
                     <p class="subtle">${escapeHtml(selected.availability || selected.note || "가능 범위 미입력")}</p>
                   </div>
                   <span class="status-chip ${review.status || "pending"}">${STATUS_LABELS[review.status || "pending"]}</span>
                   ${review.customMessage ? `<span class="status-chip adjusted">저장문구</span>` : ""}
                 </div>
                 <div class="chat-compose-grid">
-	                  <label>
-	                    회원
-	                    <select id="chatMemberSelect">
-	                      ${activeMembers.map((member) => `<option value="${member.id}" ${member.id === selected.id ? "selected" : ""}>${escapeHtml(member.name)}</option>`).join("")}
-	                    </select>
-	                  </label>
-	                  <div class="chat-mode-field">
-	                    <span>작업</span>
-	                    <div class="chat-mode-buttons" role="tablist" aria-label="카톡 작업 선택">
-	                      ${CHAT_MODES.map((mode) => `
-	                        <button type="button" role="tab" aria-selected="${state.chatMode === mode.value ? "true" : "false"}" class="${state.chatMode === mode.value ? "active" : ""}" data-action="set-chat-mode" data-mode="${escapeHtml(mode.value)}">${escapeHtml(mode.label)}</button>
-	                      `).join("")}
-	                    </div>
-	                  </div>
-	                  <label>
-	                    상태
-	                    <select data-review-id="${selected.id}" data-review-field="status">
-	                      ${Object.entries(STATUS_LABELS).map(([value, label]) => `<option value="${value}" ${review.status === value ? "selected" : ""}>${label}</option>`).join("")}
-	                    </select>
-	                  </label>
-                  <label class="wide-field">
+                  <label>
+                    회원
+                    <select id="chatMemberSelect">
+                      ${activeMembers.map((member) => `<option value="${member.id}" ${member.id === selected.id ? "selected" : ""}>${escapeHtml(member.name)}</option>`).join("")}
+                    </select>
+                  </label>
+                  <label class="field-2">
                     제안/최종 일정
                     <input id="chatCandidateText" type="text" value="${escapeHtml(state.chatCandidateText || review.finalText || selected.fixedText || "")}" placeholder="예: 월 18:00, 수 10:10, 금 10:10">
                   </label>
                 </div>
+                <div id="durationOverrideControls">
+                  ${renderDurationOverrideControls(selected)}
+                </div>
                 <div class="candidate-list" id="chatConflictPreview">
                   ${renderCandidateConflictPreview(selected)}
                 </div>
-                <div id="durationOverrideControls">
-                  ${renderDurationOverrideControls(selected)}
+                <div class="panel-actions">
+                  <button data-action="apply-chat-final">최종일정 반영</button>
+                  <button data-action="confirm-chat-final" class="primary">확정</button>
+                  <button data-action="set-status" data-id="${selected.id}" data-status="change">변경요청</button>
+                  <button data-action="set-status" data-id="${selected.id}" data-status="pending">답변대기</button>
+                </div>
+              </div>
+              <div class="mini-panel">
+                <div class="mini-panel-head">
+                  <div>
+                    <h3>카톡 문구</h3>
+                    <p class="subtle">작업 종류를 고르면 아래 문구가 자동으로 만들어집니다.</p>
+                  </div>
+                </div>
+                <div class="chat-mode-field">
+                  <span>작업</span>
+                  <div class="chat-mode-buttons" role="tablist" aria-label="카톡 작업 선택">
+                    ${CHAT_MODES.map((mode) => `
+                      <button type="button" role="tab" aria-selected="${state.chatMode === mode.value ? "true" : "false"}" class="${state.chatMode === mode.value ? "active" : ""}" data-action="set-chat-mode" data-mode="${escapeHtml(mode.value)}">${escapeHtml(mode.label)}</button>
+                    `).join("")}
+                  </div>
                 </div>
                 <textarea id="chatDraft" class="chat-draft">${escapeHtml(buildChatDraft(selected))}</textarea>
                 <div class="panel-actions">
                   <button data-action="copy-chat-draft" class="primary">문구 복사</button>
                   <button data-action="save-chat-draft">문구 저장</button>
                   <button data-action="reset-chat-draft">기본문구</button>
-                  <button data-action="apply-chat-final">최종일정 반영</button>
-                  <button data-action="confirm-chat-final" class="primary">확정</button>
-                  <button data-action="set-status" data-id="${selected.id}" data-status="change">변경요청</button>
-                  <button data-action="set-status" data-id="${selected.id}" data-status="pending">답변대기</button>
-	                </div>
+                </div>
               </div>
             </div>
           </div>
