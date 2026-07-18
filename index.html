@@ -548,20 +548,51 @@
       max-height: 760px;
     }
 
+    .chat-filter-row {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #fbfcf8;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 10px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chat-filter-chip {
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .chat-filter-chip.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    .chat-filter-empty {
+      padding: 14px;
+      margin: 0;
+    }
+
     .chat-member-button {
       width: 100%;
-      min-height: 78px;
-      padding: 12px 14px;
+      min-height: 0;
+      padding: 8px 12px;
       border: 0;
       border-bottom: 1px solid var(--line);
       border-radius: 0;
       background: transparent;
       color: var(--ink);
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
       text-align: left;
-      align-items: start;
       white-space: normal;
     }
 
@@ -570,10 +601,31 @@
       background: #eef1ec;
     }
 
+    .chat-member-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: #b9c0b4;
+    }
+
+    .chat-member-dot.pending {
+      background: var(--copper);
+    }
+
+    .chat-member-dot.change {
+      background: var(--red);
+    }
+
+    .chat-member-dot.confirmed {
+      background: var(--green);
+    }
+
     .chat-member-main {
       display: grid;
-      gap: 5px;
+      gap: 2px;
       min-width: 0;
+      flex: 1;
     }
 
     .chat-member-main strong {
@@ -584,6 +636,15 @@
       color: var(--muted);
       font-size: 12px;
       line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-member-button .status-chip {
+      min-height: 20px;
+      font-size: 11px;
+      padding: 0 7px;
     }
 
     .chat-main {
@@ -1643,6 +1704,7 @@
     let calendarSelectedDate = "";
     let calendarFormOpen = false;
     let lastWeekAutoCheckDate = "";
+    let chatMemberFilter = "all";
     let memberSearchRenderTimer = null;
     let memberSearchComposing = false;
     let supabaseClient = null;
@@ -3029,6 +3091,14 @@
       const selected = getChatMember();
       const review = selected ? getReview(selected.id) : null;
       const candidates = extractScheduleCandidates(state.chatPasteText || "");
+      const chatFilterCounts = { all: activeMembers.length, pending: 0, change: 0, confirmed: 0 };
+      activeMembers.forEach((member) => {
+        chatFilterCounts[getReview(member.id).status || "pending"] += 1;
+      });
+      if (chatMemberFilter !== "all" && !chatFilterCounts[chatMemberFilter]) chatMemberFilter = "all";
+      const visibleMembers = chatMemberFilter === "all"
+        ? activeMembers
+        : activeMembers.filter((member) => (getReview(member.id).status || "pending") === chatMemberFilter);
       document.getElementById("tab-chat").innerHTML = `
         <div class="panel-head">
           <div>
@@ -3045,7 +3115,13 @@
         ${selected ? `
           <div class="chat-work">
             <aside class="chat-sidebar">
-              ${activeMembers.map((member) => renderChatMemberButton(member)).join("")}
+              <div class="chat-filter-row">
+                ${[["all", "전체"], ["pending", "답변대기"], ["change", "변경요청"], ["confirmed", "확정"]].map(([value, label]) => {
+                  if (value !== "all" && !chatFilterCounts[value]) return "";
+                  return `<button class="chat-filter-chip ${chatMemberFilter === value ? "active" : ""}" data-action="set-chat-member-filter" data-filter="${value}">${label} ${chatFilterCounts[value]}</button>`;
+                }).join("")}
+              </div>
+              ${visibleMembers.length ? visibleMembers.map((member) => renderChatMemberButton(member)).join("") : `<p class="subtle chat-filter-empty">해당 상태의 회원이 없습니다.</p>`}
             </aside>
             <div class="chat-main">
               <div class="mini-panel">
@@ -3135,6 +3211,7 @@
       const schedule = review.finalText || member.fixedText || member.availability || "일정 확인 필요";
       return `
         <button class="chat-member-button ${isActive ? "active" : ""}" data-action="select-chat-member" data-id="${member.id}">
+          <span class="chat-member-dot ${review.status || "pending"}"></span>
           <span class="chat-member-main">
             <strong>${escapeHtml(member.name)}</strong>
             <span>${escapeHtml(schedule)}</span>
@@ -4809,6 +4886,10 @@
       if (action === "delete-member") deleteMember(id);
       if (action === "duplicate-member") duplicateMember(id);
       if (action === "select-chat-member") setChatMember(id);
+      if (action === "set-chat-member-filter") {
+        chatMemberFilter = target.dataset.filter || "all";
+        renderChatWork();
+      }
       if (action === "set-chat-mode") setChatMode(target.dataset.mode || "confirm");
       if (action === "use-candidate") appendChatCandidate(target.dataset.value || "");
       if (action === "copy-message") {
