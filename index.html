@@ -774,6 +774,13 @@
       border-color: rgba(255, 255, 255, 0.58);
     }
 
+    .week-strip-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .week-strip button:hover {
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.86);
@@ -1558,9 +1565,13 @@
 
     <main>
       <section class="week-strip">
-        <div>
-          <strong id="weekLabel"></strong>
-          <span id="weekSubLabel"></span>
+        <div class="week-strip-nav">
+          <button id="weekPrev" class="ghost icon-only" aria-label="이전 주" title="이전 주">&lt;</button>
+          <div>
+            <strong id="weekLabel"></strong>
+            <span id="weekSubLabel"></span>
+          </div>
+          <button id="weekNext" class="ghost icon-only" aria-label="다음 주" title="다음 주">&gt;</button>
         </div>
         <div class="panel-actions">
           <button id="setNextMonday" class="ghost">다음 월요일</button>
@@ -1831,6 +1842,13 @@
       state.weekStart = target;
       state.historyWeek = target;
       return true;
+    }
+
+    function shiftWeek(days) {
+      state.weekStart = toISODate(addDays(parseISODate(state.weekStart), days));
+      state.historyWeek = state.weekStart;
+      saveState();
+      render();
     }
 
     function formatKoreanDate(date, withYear = false) {
@@ -4867,6 +4885,8 @@
       if (target.id === "loadCloudNow") loadCloudState();
       if (target.id === "signOutCloud") signOutCloud();
       if (target.id === "copySummary") copySummary();
+      if (target.id === "weekPrev") shiftWeek(-7);
+      if (target.id === "weekNext") shiftWeek(7);
       if (target.id === "setNextMonday") {
         state.weekStart = toISODate(getNextMonday(new Date()));
         state.historyWeek = state.weekStart;
