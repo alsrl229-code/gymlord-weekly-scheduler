@@ -1626,6 +1626,7 @@
     let calendarMonth = "";
     let calendarSelectedDate = "";
     let calendarFormOpen = false;
+    let lastWeekAutoCheckDate = "";
     let memberSearchRenderTimer = null;
     let memberSearchComposing = false;
     let supabaseClient = null;
@@ -1814,6 +1815,22 @@
       const day = current.getDay();
       const daysUntilMonday = (8 - day) % 7 || 7;
       return addDays(current, daysUntilMonday);
+    }
+
+    function getCurrentTargetWeekStart() {
+      const now = new Date();
+      const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const day = base.getDay();
+      if (day === 6 || day === 0) return toISODate(getNextMonday(base));
+      return toISODate(addDays(base, 1 - day));
+    }
+
+    function maybeAdvanceWeekStart() {
+      const target = getCurrentTargetWeekStart();
+      if ((state.weekStart || "") >= target) return false;
+      state.weekStart = target;
+      state.historyWeek = target;
+      return true;
     }
 
     function formatKoreanDate(date, withYear = false) {
@@ -2318,6 +2335,7 @@
         if (record?.app_state) {
           cloudState.applyingRemote = true;
           state = normalizeStateObject(record.app_state);
+          maybeAdvanceWeekStart();
           cloudState.lastUpdatedAt = record.updated_at || "";
           saveState({ skipCloud: true });
           cloudState.applyingRemote = false;
@@ -3010,6 +3028,25 @@
               <div class="mini-panel">
                 <div class="mini-panel-head">
                   <div>
+                    <h3>회원 답변에서 일정 만들기</h3>
+                    <p class="subtle">회원이 보낸 일정 문장을 붙여넣으면 등록 내용을 자동으로 만듭니다.</p>
+                  </div>
+                  <div class="panel-actions">
+                    <button id="parseChatReply" class="primary">답변에서 일정 만들기</button>
+                    <button id="refreshChatCandidates">후보 찾기</button>
+                  </div>
+                </div>
+                <textarea id="chatPasteText" placeholder="회원이 보낸 답변을 붙여넣기. 예: 30일 오후 1시 / 2일 오후 2시 / 금요일 오후1시30분 가능합니다.">${escapeHtml(state.chatPasteText || "")}</textarea>
+                <div id="parsedScheduleResult">
+                  ${renderParsedScheduleResult(candidates)}
+                </div>
+                <div class="candidate-list" id="chatCandidateList">
+                  ${candidates.length ? candidates.map((candidate) => `<button class="candidate-chip" data-action="use-candidate" data-value="${escapeHtml(candidate.scheduleText)}">${escapeHtml(candidate.label)}</button>`).join("") : `<span class="subtle">이번 주 날짜/요일과 시간이 잡히면 여기에 후보가 표시됩니다.</span>`}
+                </div>
+              </div>
+              <div class="mini-panel">
+                <div class="mini-panel-head">
+                  <div>
                     <h3>${escapeHtml(selected.name)}</h3>
                     <p class="subtle">${escapeHtml(selected.availability || selected.note || "가능 범위 미입력")}</p>
                   </div>
@@ -3058,25 +3095,6 @@
                   <button data-action="set-status" data-id="${selected.id}" data-status="change">변경요청</button>
                   <button data-action="set-status" data-id="${selected.id}" data-status="pending">답변대기</button>
 	                </div>
-              </div>
-              <div class="mini-panel">
-                <div class="mini-panel-head">
-                  <div>
-                    <h3>회원 답변에서 일정 만들기</h3>
-                    <p class="subtle">회원이 보낸 일정 문장을 붙여넣으면 등록 내용을 자동으로 만듭니다.</p>
-                  </div>
-                  <div class="panel-actions">
-                    <button id="parseChatReply" class="primary">답변에서 일정 만들기</button>
-                    <button id="refreshChatCandidates">후보 찾기</button>
-                  </div>
-                </div>
-                <textarea id="chatPasteText" placeholder="회원이 보낸 답변을 붙여넣기. 예: 30일 오후 1시 / 2일 오후 2시 / 금요일 오후1시30분 가능합니다.">${escapeHtml(state.chatPasteText || "")}</textarea>
-                <div id="parsedScheduleResult">
-                  ${renderParsedScheduleResult(candidates)}
-                </div>
-                <div class="candidate-list" id="chatCandidateList">
-                  ${candidates.length ? candidates.map((candidate) => `<button class="candidate-chip" data-action="use-candidate" data-value="${escapeHtml(candidate.scheduleText)}">${escapeHtml(candidate.label)}</button>`).join("") : `<span class="subtle">이번 주 날짜/요일과 시간이 잡히면 여기에 후보가 표시됩니다.</span>`}
-                </div>
               </div>
             </div>
           </div>
@@ -4994,6 +5012,23 @@
       }
     });
 
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      const todayISO = toISODate(new Date());
+      if (todayISO === lastWeekAutoCheckDate) return;
+      lastWeekAutoCheckDate = todayISO;
+      if (maybeAdvanceWeekStart()) {
+        saveState();
+        render();
+        showToast(`${weekRangeLabel()} 주차로 자동 이동했습니다.`);
+      }
+    });
+
+    lastWeekAutoCheckDate = toISODate(new Date());
+    if (maybeAdvanceWeekStart()) {
+      saveState();
+      showToast(`${weekRangeLabel()} 주차로 자동 이동했습니다.`);
+    }
     render();
     initCloudSync();
   </script>
