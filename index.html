@@ -647,6 +647,48 @@
       padding: 0 7px;
     }
 
+    .free-slot-box {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcf8;
+      padding: 12px 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .free-slot-head {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .free-slot-head strong {
+      font-size: 13px;
+    }
+
+    .free-slot-day {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+
+    .free-slot-day > strong {
+      min-width: 14px;
+    }
+
+    .free-slot-windows {
+      color: var(--muted);
+    }
+
+    .free-slot-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
     .chat-main {
       padding: 16px;
       display: grid;
@@ -3086,6 +3128,70 @@
       `;
     }
 
+    function getFreeSlotRecommendations(member) {
+      if (!member) return { duration: 0, spanStart: 0, spanEnd: 0, days: [] };
+      const duration = memberDuration(member);
+      const rows = getComparisonRows(member.id).filter((row) => !membersShareGroup(member.id, row.memberId) && row.startMinutes !== null);
+      const spanStart = rows.length ? Math.min(...rows.map((row) => row.startMinutes)) : 9 * 60;
+      const spanEnd = rows.length ? Math.max(...rows.map((row) => row.endMinutes)) : 20 * 60;
+      const weekStart = parseISODate(state.weekStart);
+      const days = [];
+      for (let i = 0; i < 7; i += 1) {
+        const dateISO = toISODate(addDays(weekStart, i));
+        const dayRows = rows.filter((row) => row.dateISO === dateISO).sort((a, b) => a.startMinutes - b.startMinutes);
+        const windows = [];
+        let cursor = spanStart;
+        dayRows.forEach((row) => {
+          if (row.startMinutes - cursor >= duration) windows.push([cursor, row.startMinutes]);
+          cursor = Math.max(cursor, row.endMinutes);
+        });
+        if (spanEnd - cursor >= duration) windows.push([cursor, spanEnd]);
+        if (windows.length) days.push({ day: DAYS[i], dateISO, windows });
+      }
+      return { duration, spanStart, spanEnd, days };
+    }
+
+    function recommendedStartForWindow(windowStart, windowEnd, duration) {
+      const rounded = Math.ceil(windowStart / 30) * 30;
+      if (rounded + duration <= windowEnd) return rounded;
+      return windowStart + duration <= windowEnd ? windowStart : null;
+    }
+
+    function renderFreeSlotSuggestions(member) {
+      const rec = getFreeSlotRecommendations(member);
+      const rangeLabel = `${minutesToTime(rec.spanStart)}~${minutesToTime(rec.spanEnd)}`;
+      if (!rec.days.length) {
+        return `
+          <div class="free-slot-box">
+            <div class="free-slot-head">
+              <strong>빈시간 추천</strong>
+              <span class="subtle">이번 주 ${rangeLabel} 범위에는 ${rec.duration}분이 들어갈 빈 시간이 없습니다.</span>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="free-slot-box">
+          <div class="free-slot-head">
+            <strong>빈시간 추천</strong>
+            <span class="subtle">다른 회원 일정 기준 · 확보분 ${rec.duration}분 · ${rangeLabel} 범위</span>
+          </div>
+          ${rec.days.map((dayInfo) => `
+            <div class="free-slot-day">
+              <strong>${dayInfo.day}</strong>
+              <span class="free-slot-windows">${dayInfo.windows.map(([start, end]) => `${minutesToTime(start)}~${minutesToTime(end)}`).join(" · ")}</span>
+              <span class="free-slot-chips">${dayInfo.windows.map(([start, end]) => {
+                const chipStart = recommendedStartForWindow(start, end, rec.duration);
+                if (chipStart === null) return "";
+                const chipTime = minutesToTime(chipStart);
+                return `<button class="candidate-chip" data-action="use-candidate" data-value="${dayInfo.day} ${chipTime}">+ ${dayInfo.day} ${displayTime(chipTime)}</button>`;
+              }).join("")}</span>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
     function renderChatWork() {
       const activeMembers = getActiveMembers().slice().sort((a, b) => responseSortValue(a) - responseSortValue(b) || a.name.localeCompare(b.name));
       const selected = getChatMember();
@@ -3170,6 +3276,7 @@
                 <div class="candidate-list" id="chatConflictPreview">
                   ${renderCandidateConflictPreview(selected)}
                 </div>
+                ${renderFreeSlotSuggestions(selected)}
                 <div class="panel-actions">
                   <button data-action="apply-chat-final">최종일정 반영</button>
                   <button data-action="confirm-chat-final" class="primary">확정</button>
