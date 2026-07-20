@@ -689,6 +689,45 @@
       flex-wrap: wrap;
     }
 
+    .work-hours-toggle {
+      margin-left: auto;
+      min-height: 28px;
+      font-size: 12px;
+      padding: 0 10px;
+    }
+
+    .work-hours-grid {
+      display: grid;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      background: #fff;
+    }
+
+    .work-hours-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+
+    .work-hours-row > strong {
+      min-width: 14px;
+    }
+
+    .work-hours-row input[type="time"] {
+      width: auto;
+      min-height: 32px;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .work-hours-row.off input[type="time"] {
+      opacity: 0.45;
+    }
+
     .chat-main {
       padding: 16px;
       display: grid;
@@ -1747,6 +1786,7 @@
     let calendarFormOpen = false;
     let lastWeekAutoCheckDate = "";
     let chatMemberFilter = "all";
+    let workHoursOpen = false;
     let memberSearchRenderTimer = null;
     let memberSearchComposing = false;
     let supabaseClient = null;
@@ -1834,6 +1874,7 @@
         chatCandidateText: "",
         chatPasteText: "",
         calendarEvents: [],
+        workHours: DAYS.map(() => ({ off: false, start: "09:00", end: "21:00" })),
         historyWeek: weekStart,
 	        durationMigratedToBuffer: true
 	      };
@@ -1864,6 +1905,13 @@
 	      next.brojMode = parsed.brojMode === "live" ? "live" : "test";
 	      next.brojCustomerChecks = parsed.brojCustomerChecks && typeof parsed.brojCustomerChecks === "object" ? parsed.brojCustomerChecks : {};
 	      next.brojResultText = typeof parsed.brojResultText === "string" ? parsed.brojResultText : "";
+	      next.workHours = Array.isArray(parsed.workHours) && parsed.workHours.length === 7
+	        ? parsed.workHours.map((item) => ({
+	            off: Boolean(item && item.off),
+	            start: item && /^\d{2}:\d{2}$/.test(item.start || "") ? item.start : "09:00",
+	            end: item && /^\d{2}:\d{2}$/.test(item.end || "") ? item.end : "21:00"
+	          }))
+	        : DAYS.map(() => ({ off: false, start: "09:00", end: "21:00" }));
 	      next.calendarEvents = Array.isArray(parsed.calendarEvents)
 	        ? parsed.calendarEvents
 	            .filter((event) => event && typeof event === "object" && event.date && event.time && (event.name || event.memberId))
@@ -3128,27 +3176,40 @@
       `;
     }
 
+    function getWorkHours() {
+      if (!Array.isArray(state.workHours) || state.workHours.length !== 7) {
+        state.workHours = DAYS.map(() => ({ off: false, start: "09:00", end: "21:00" }));
+      }
+      return state.workHours;
+    }
+
     function getFreeSlotRecommendations(member) {
-      if (!member) return { duration: 0, spanStart: 0, spanEnd: 0, days: [] };
+      if (!member) return { duration: 0, days: [] };
       const duration = memberDuration(member);
       const rows = getComparisonRows(member.id).filter((row) => !membersShareGroup(member.id, row.memberId) && row.startMinutes !== null);
-      const spanStart = rows.length ? Math.min(...rows.map((row) => row.startMinutes)) : 9 * 60;
-      const spanEnd = rows.length ? Math.max(...rows.map((row) => row.endMinutes)) : 20 * 60;
+      const workHours = getWorkHours();
       const weekStart = parseISODate(state.weekStart);
       const days = [];
       for (let i = 0; i < 7; i += 1) {
+        const config = workHours[i] || {};
+        if (config.off) continue;
+        const spanStart = timeToMinutes(config.start || "09:00");
+        const spanEnd = timeToMinutes(config.end || "21:00");
+        if (spanStart === null || spanEnd === null || spanEnd - spanStart < duration) continue;
         const dateISO = toISODate(addDays(weekStart, i));
         const dayRows = rows.filter((row) => row.dateISO === dateISO).sort((a, b) => a.startMinutes - b.startMinutes);
         const windows = [];
         let cursor = spanStart;
         dayRows.forEach((row) => {
-          if (row.startMinutes - cursor >= duration) windows.push([cursor, row.startMinutes]);
+          if (cursor >= spanEnd) return;
+          const blockStart = Math.min(Math.max(row.startMinutes, spanStart), spanEnd);
+          if (blockStart - cursor >= duration) windows.push([cursor, blockStart]);
           cursor = Math.max(cursor, row.endMinutes);
         });
         if (spanEnd - cursor >= duration) windows.push([cursor, spanEnd]);
         if (windows.length) days.push({ day: DAYS[i], dateISO, windows });
       }
-      return { duration, spanStart, spanEnd, days };
+      return { duration, days };
     }
 
     function recommendedStartForWindow(windowStart, windowEnd, duration) {
@@ -3159,24 +3220,28 @@
 
     function renderFreeSlotSuggestions(member) {
       const rec = getFreeSlotRecommendations(member);
-      const rangeLabel = `${minutesToTime(rec.spanStart)}~${minutesToTime(rec.spanEnd)}`;
-      if (!rec.days.length) {
-        return `
-          <div class="free-slot-box">
-            <div class="free-slot-head">
-              <strong>빈시간 추천</strong>
-              <span class="subtle">이번 주 ${rangeLabel} 범위에는 ${rec.duration}분이 들어갈 빈 시간이 없습니다.</span>
-            </div>
-          </div>
-        `;
-      }
-      return `
-        <div class="free-slot-box">
-          <div class="free-slot-head">
-            <strong>빈시간 추천</strong>
-            <span class="subtle">다른 회원 일정 기준 · 확보분 ${rec.duration}분 · ${rangeLabel} 범위</span>
-          </div>
-          ${rec.days.map((dayInfo) => `
+      const workHours = getWorkHours();
+      const settingsHtml = workHoursOpen ? `
+        <div class="work-hours-grid">
+          <p class="subtle">요일별 레슨 가능시간입니다. 휴무 요일은 추천에서 빠집니다.</p>
+          ${DAYS.map((day, i) => {
+            const config = workHours[i];
+            return `
+              <div class="work-hours-row ${config.off ? "off" : ""}">
+                <strong>${day}</strong>
+                <label class="inline-check">
+                  <input type="checkbox" data-work-day="${i}" data-work-field="off" ${config.off ? "checked" : ""}>
+                  휴무
+                </label>
+                <input type="time" value="${escapeHtml(config.start)}" data-work-day="${i}" data-work-field="start" ${config.off ? "disabled" : ""}>
+                <span>~</span>
+                <input type="time" value="${escapeHtml(config.end)}" data-work-day="${i}" data-work-field="end" ${config.off ? "disabled" : ""}>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      ` : "";
+      const bodyHtml = rec.days.length ? rec.days.map((dayInfo) => `
             <div class="free-slot-day">
               <strong>${dayInfo.day}</strong>
               <span class="free-slot-windows">${dayInfo.windows.map(([start, end]) => `${minutesToTime(start)}~${minutesToTime(end)}`).join(" · ")}</span>
@@ -3187,7 +3252,16 @@
                 return `<button class="candidate-chip" data-action="use-candidate" data-value="${dayInfo.day} ${chipTime}">+ ${dayInfo.day} ${displayTime(chipTime)}</button>`;
               }).join("")}</span>
             </div>
-          `).join("")}
+          `).join("") : `<p class="subtle">근무시간 안에 ${rec.duration}분이 들어갈 빈 시간이 없습니다.</p>`;
+      return `
+        <div class="free-slot-box">
+          <div class="free-slot-head">
+            <strong>빈시간 추천</strong>
+            <span class="subtle">요일별 근무시간 기준 · 확보분 ${rec.duration}분</span>
+            <button class="ghost work-hours-toggle" data-action="toggle-work-hours">${workHoursOpen ? "설정 닫기" : "근무시간 설정"}</button>
+          </div>
+          ${settingsHtml}
+          ${bodyHtml}
         </div>
       `;
     }
@@ -4997,6 +5071,10 @@
         chatMemberFilter = target.dataset.filter || "all";
         renderChatWork();
       }
+      if (action === "toggle-work-hours") {
+        workHoursOpen = !workHoursOpen;
+        renderChatWork();
+      }
       if (action === "set-chat-mode") setChatMode(target.dataset.mode || "confirm");
       if (action === "use-candidate") appendChatCandidate(target.dataset.value || "");
       if (action === "copy-message") {
@@ -5186,6 +5264,15 @@
       }
       if (target.dataset.brojDoneKey) {
         setBrojDone(target.dataset.brojDoneKey, target.checked);
+      }
+      if (target.dataset.workDay !== undefined && target.dataset.workField) {
+        const dayConfig = getWorkHours()[Number(target.dataset.workDay)];
+        if (dayConfig) {
+          if (target.dataset.workField === "off") dayConfig.off = target.checked;
+          else dayConfig[target.dataset.workField] = target.value || dayConfig[target.dataset.workField];
+          saveState();
+          renderChatWork();
+        }
       }
       if (target.id === "historyWeekSelect") {
         state.historyWeek = target.value || state.weekStart;
