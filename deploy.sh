@@ -5,6 +5,8 @@
 set -e
 cd "$(dirname "$0")"
 
+GITHUB_USER="alsrl229-code"
+
 git fetch origin
 
 if ! git merge-base --is-ancestor origin/main HEAD; then
@@ -14,15 +16,40 @@ if ! git merge-base --is-ancestor origin/main HEAD; then
   exit 1
 fi
 
-if git diff --quiet -- index.html && git diff --cached --quiet -- index.html; then
+if ! git diff --quiet -- index.html || ! git diff --cached --quiet -- index.html; then
+  msg="${1:-앱 업데이트 $(date '+%Y-%m-%d %H:%M')}"
+  git add index.html
+  git commit -m "$msg"
+fi
+
+if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
   echo "변경 사항 없음 — 배포할 것이 없습니다."
   exit 0
 fi
 
-msg="${1:-앱 업데이트 $(date '+%Y-%m-%d %H:%M')}"
-git add index.html
-git commit -m "$msg"
-git push origin main
+# gh 활성 계정이 다른 계정(예: Mingkydayo)이면 push 동안만 전환했다가 복원
+restore_account=""
+if command -v gh >/dev/null 2>&1; then
+  active="$(gh api user --jq .login 2>/dev/null || echo "")"
+  if [ -n "$active" ] && [ "$active" != "$GITHUB_USER" ]; then
+    echo "· gh 계정 전환: $active → $GITHUB_USER (push 후 복원됩니다)"
+    gh auth switch --hostname github.com --user "$GITHUB_USER"
+    restore_account="$active"
+  fi
+fi
+
+push_result=0
+git push origin main || push_result=$?
+
+if [ -n "$restore_account" ]; then
+  gh auth switch --hostname github.com --user "$restore_account" >/dev/null 2>&1 || true
+  echo "· gh 계정 복원: $restore_account"
+fi
+
+if [ "$push_result" -ne 0 ]; then
+  echo "⚠️  push 실패 — 클로드에게 알려주세요."
+  exit "$push_result"
+fi
 
 echo ""
 echo "✅ 배포 완료! 1~2분 뒤 아래 주소에 반영됩니다."
