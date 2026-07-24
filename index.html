@@ -689,6 +689,50 @@
       flex-wrap: wrap;
     }
 
+    .churn-strip {
+      margin: 14px 16px 0;
+      border: 1px solid #e6c9a8;
+      border-radius: var(--radius);
+      background: #fdf6ee;
+      padding: 12px 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .churn-strip-head {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .churn-strip-head strong {
+      font-size: 13px;
+      color: var(--copper);
+    }
+
+    .churn-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .churn-chip {
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #fff;
+      border-color: #e6c9a8;
+      gap: 6px;
+    }
+
+    .churn-chip span {
+      color: var(--copper);
+      font-weight: 700;
+    }
+
     .work-hours-toggle {
       margin-left: auto;
       min-height: 28px;
@@ -2629,6 +2673,57 @@
       }, delay);
     }
 
+    const CHURN_RISK_WEEKS = 3;
+
+    function getTrackedPastWeeks() {
+      return Object.keys(state.reviews || {})
+        .filter((week) => week < state.weekStart)
+        .sort((a, b) => b.localeCompare(a));
+    }
+
+    function hadSessionInWeek(member, weekStart) {
+      const review = (state.reviews[weekStart] || {})[member.id];
+      if (!review || normalizeStatus(review.status) !== "confirmed") return false;
+      return parseScheduleText(review.finalText || member.fixedText || "", weekStart).length > 0;
+    }
+
+    function getChurnRiskMembers() {
+      const pastWeeks = getTrackedPastWeeks();
+      if (pastWeeks.length < CHURN_RISK_WEEKS) return { ready: false, weeksTracked: pastWeeks.length, members: [] };
+      const members = [];
+      getActiveMembers().forEach((member) => {
+        let streak = 0;
+        for (const week of pastWeeks) {
+          if (hadSessionInWeek(member, week)) break;
+          streak += 1;
+        }
+        if (streak >= CHURN_RISK_WEEKS) members.push({ member, streak, everTrained: pastWeeks.some((week) => hadSessionInWeek(member, week)) });
+      });
+      members.sort((a, b) => b.streak - a.streak || a.member.name.localeCompare(b.member.name));
+      return { ready: true, weeksTracked: pastWeeks.length, members };
+    }
+
+    function renderChurnRiskStrip() {
+      const risk = getChurnRiskMembers();
+      if (!risk.ready || !risk.members.length) return "";
+      return `
+        <div class="churn-strip">
+          <div class="churn-strip-head">
+            <strong>이탈 위험 ${risk.members.length}명</strong>
+            <span class="subtle">${CHURN_RISK_WEEKS}주 이상 확정 수업이 없는 활성 회원입니다.</span>
+          </div>
+          <div class="churn-chips">
+            ${risk.members.map(({ member, streak, everTrained }) => `
+              <button class="churn-chip" data-action="open-chat-member" data-id="${member.id}" title="카톡작업에서 이 회원 열기">
+                ${escapeHtml(member.name)}
+                <span>${everTrained ? `${streak}주째` : "기록 없음"}</span>
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
     function renderMembers() {
       const query = (state.memberSearch || "").trim().toLowerCase();
       const filtered = state.members.filter((member) => !query || member.name.toLowerCase().includes(query));
@@ -2646,6 +2741,7 @@
             <button class="primary" id="addMember"><span aria-hidden="true">+</span>회원 추가</button>
           </div>
         </div>
+        ${renderChurnRiskStrip()}
         <div class="toolbar">
           <input class="search" id="memberSearch" type="search" placeholder="회원 검색" value="${escapeHtml(state.memberSearch || "")}">
           <span class="subtle">비활성 회원은 이번 주 확인 대상에서 빠집니다.</span>
@@ -5067,6 +5163,12 @@
       if (action === "delete-member") deleteMember(id);
       if (action === "duplicate-member") duplicateMember(id);
       if (action === "select-chat-member") setChatMember(id);
+      if (action === "open-chat-member") {
+        activeTab = "chat";
+        chatMemberFilter = "all";
+        setChatMember(id);
+        render();
+      }
       if (action === "set-chat-member-filter") {
         chatMemberFilter = target.dataset.filter || "all";
         renderChatWork();
