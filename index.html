@@ -647,6 +647,13 @@
       padding: 0 7px;
     }
 
+    .chat-member-flags {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
     .free-slot-box {
       border: 1px solid var(--line);
       border-radius: var(--radius);
@@ -1813,6 +1820,15 @@
     const BROJ_DURATION_MINUTES = 60;
     const BROJ_TRAINER_NAME = "서민기";
     const BROJ_CRM_URL = "https://crm-beta.broj.co.kr/";
+    // ── GYMLORD CRM 직접 연동 (2026-08-01, 브로제이 커트오버 이후) ──────────────
+    // 관리도구와 GYMLORD CRM은 **같은 오리진**(alsrl229-code.github.io)이라
+    // localStorage를 공유한다. 확정 일정을 아래 키에 넣고 CRM을 `?import=1`로 열면,
+    // CRM이 '주간 스케줄 가져오기'를 그 일정으로 채운 채 자동으로 연다.
+    //   → 복사 → 앱 전환 → 붙여넣기 3단계가 사라진다.
+    // 회원매칭·중복·시간겹침 검사는 CRM 쪽 기존 로직이 그대로 처리한다
+    // (동명이인·회원권없음은 사람이 판단할 항목이라 CRM 화면에서 푸는 게 맞다).
+    const GYMLORD_CRM_URL = "https://alsrl229-code.github.io/gymlord-crm/";
+    const CRM_HANDOFF_KEY = "gl_schedule_handoff";
     const BROJ_SEARCH_LABELS = {
       unknown: "검색 확인 전",
       ok: "검색 가능",
@@ -1918,6 +1934,7 @@
         chatCandidateText: "",
         chatPasteText: "",
         calendarEvents: [],
+        noShowLog: [],
         workHours: DAYS.map(() => ({ off: false, start: "09:00", end: "21:00" })),
         historyWeek: weekStart,
 	        durationMigratedToBuffer: true
@@ -1933,9 +1950,25 @@
 	    function normalizeReviewStatuses(reviews) {
 	      Object.values(reviews || {}).forEach((weekReview) => {
 	        Object.values(weekReview || {}).forEach((review) => {
-	          if (review && typeof review === "object") review.status = normalizeStatus(review.status);
+	          if (review && typeof review === "object") {
+	            review.status = normalizeStatus(review.status);
+	            if (!review.customMessages || typeof review.customMessages !== "object") review.customMessages = {};
+	            if (review.customMessage && !Object.keys(review.customMessages).length) {
+	              review.customMessages.confirm = review.customMessage;
+	            }
+	            delete review.customMessage;
+	          }
 	        });
 	      });
+	    }
+
+	    function getSavedChatMessage(memberId, mode = state.chatMode) {
+	      const messages = getReview(memberId).customMessages || {};
+	      return String(messages[mode] || "").trim();
+	    }
+
+	    function hasAnySavedChatMessage(review) {
+	      return Object.values((review && review.customMessages) || {}).some((value) => String(value || "").trim());
 	    }
 
 	    function normalizeStateObject(imported = {}) {
@@ -1949,6 +1982,11 @@
 	      next.brojMode = parsed.brojMode === "live" ? "live" : "test";
 	      next.brojCustomerChecks = parsed.brojCustomerChecks && typeof parsed.brojCustomerChecks === "object" ? parsed.brojCustomerChecks : {};
 	      next.brojResultText = typeof parsed.brojResultText === "string" ? parsed.brojResultText : "";
+	      next.noShowLog = Array.isArray(parsed.noShowLog)
+	        ? parsed.noShowLog
+	            .filter((item) => item && typeof item === "object" && item.memberId && /^\d{4}-\d{2}-\d{2}$/.test(item.date || ""))
+	            .map((item) => ({ id: item.id || makeId(), memberId: item.memberId, date: item.date }))
+	        : [];
 	      next.workHours = Array.isArray(parsed.workHours) && parsed.workHours.length === 7
 	        ? parsed.workHours.map((item) => ({
 	            off: Boolean(item && item.off),
@@ -2073,7 +2111,7 @@
             request: "",
             finalText: member.fixedText || "",
             note: "",
-            customMessage: "",
+            customMessages: {},
             durationOverrides: {},
             conflictIgnores: {}
           };
@@ -2081,6 +2119,11 @@
 	          review[member.id].status = normalizeStatus(review[member.id].status);
 	          if (!review[member.id].durationOverrides) review[member.id].durationOverrides = {};
 	          if (!review[member.id].conflictIgnores) review[member.id].conflictIgnores = {};
+	          if (!review[member.id].customMessages || typeof review[member.id].customMessages !== "object") review[member.id].customMessages = {};
+	          if (review[member.id].customMessage) {
+	            if (!Object.keys(review[member.id].customMessages).length) review[member.id].customMessages.confirm = review[member.id].customMessage;
+	            delete review[member.id].customMessage;
+	          }
 	        }
       });
       return review;
@@ -2293,8 +2336,10 @@
       return `${member.name}님 안녕하세요, ${trainer}입니다.\n다음 주 스케줄 먼저 확인드릴게요.\n\n${note}\n\n그대로 가능하시면 "확정"이라고 답장 부탁드리고, 변경 필요하시면 가능한 요일/시간 보내주세요.`;
     }
 
+    const MESSAGE_TAB_MODE = "formal";
+
     function buildMessage(member) {
-      const saved = (getReview(member.id).customMessage || "").trim();
+      const saved = getSavedChatMessage(member.id, MESSAGE_TAB_MODE);
       return saved || generateMessage(member);
     }
 
@@ -2875,7 +2920,7 @@
 
     function buildChatDraft(member) {
       if (!member) return "";
-      const saved = (getReview(member.id).customMessage || "").trim();
+      const saved = getSavedChatMessage(member.id);
       return saved || generateChatDraft(member);
     }
 
@@ -3056,7 +3101,7 @@
           request: "",
           finalText: member.fixedText || "",
           note: "",
-          customMessage: "",
+          customMessages: {},
           durationOverrides: {},
           conflictIgnores: {}
         };
@@ -3362,6 +3407,59 @@
       `;
     }
 
+    function daysSinceISO(dateISO) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO || "")) return null;
+      const from = parseISODate(dateISO);
+      const today = new Date();
+      const diff = new Date(today.getFullYear(), today.getMonth(), today.getDate()) - from;
+      return Math.max(0, Math.round(diff / 86400000));
+    }
+
+    function markContacted(memberId) {
+      if (!memberId) return;
+      const review = getWeekReview()[memberId];
+      if (!review) return;
+      review.contactedAt = toISODate(new Date());
+      saveState();
+    }
+
+    function waitingDaysFor(memberId) {
+      const review = getReview(memberId);
+      if (normalizeStatus(review.status) !== "pending") return null;
+      return daysSinceISO(review.contactedAt);
+    }
+
+    function getNoShowLog() {
+      if (!Array.isArray(state.noShowLog)) state.noShowLog = [];
+      return state.noShowLog;
+    }
+
+    function getNoShowCount(memberId) {
+      return getNoShowLog().filter((item) => item.memberId === memberId).length;
+    }
+
+    function recordNoShow(memberId) {
+      const member = state.members.find((item) => item.id === memberId);
+      if (!member) return;
+      getNoShowLog().push({ id: makeId(), memberId, date: toISODate(new Date()) });
+      saveState();
+      render();
+      showToast(`${member.name}님 노쇼를 기록했습니다. (누적 ${getNoShowCount(memberId)}회)`);
+    }
+
+    function undoLastNoShow(memberId) {
+      const log = getNoShowLog();
+      for (let i = log.length - 1; i >= 0; i -= 1) {
+        if (log[i].memberId === memberId) {
+          log.splice(i, 1);
+          saveState();
+          render();
+          showToast("가장 최근 노쇼 기록을 취소했습니다.");
+          return;
+        }
+      }
+    }
+
     function renderChatWork() {
       const activeMembers = getActiveMembers().slice().sort((a, b) => responseSortValue(a) - responseSortValue(b) || a.name.localeCompare(b.name));
       const selected = getChatMember();
@@ -3425,8 +3523,9 @@
                     <h3>일정 확정 · ${escapeHtml(selected.name)}</h3>
                     <p class="subtle">${escapeHtml(selected.availability || selected.note || "가능 범위 미입력")}</p>
                   </div>
-                  <span class="status-chip ${review.status || "pending"}">${STATUS_LABELS[review.status || "pending"]}</span>
-                  ${review.customMessage ? `<span class="status-chip adjusted">저장문구</span>` : ""}
+                  <span class="status-chip ${review.status || "pending"}">${STATUS_LABELS[review.status || "pending"]}${waitingDaysFor(selected.id) === null ? "" : ` ${waitingDaysFor(selected.id)}일째`}</span>
+                  ${getNoShowCount(selected.id) ? `<span class="status-chip cancel">노쇼 ${getNoShowCount(selected.id)}회</span>` : ""}
+                  ${getSavedChatMessage(selected.id) ? `<span class="status-chip adjusted">저장문구</span>` : ""}
                 </div>
                 <div class="chat-compose-grid">
                   <label>
@@ -3452,6 +3551,8 @@
                   <button data-action="confirm-chat-final" class="primary">확정</button>
                   <button data-action="set-status" data-id="${selected.id}" data-status="change">변경요청</button>
                   <button data-action="set-status" data-id="${selected.id}" data-status="pending">답변대기</button>
+                  <button class="danger" data-action="record-no-show" data-id="${selected.id}">노쇼 기록</button>
+                  ${getNoShowCount(selected.id) ? `<button data-action="undo-no-show" data-id="${selected.id}">노쇼 취소</button>` : ""}
                 </div>
               </div>
               <div class="mini-panel">
@@ -3486,6 +3587,8 @@
       const review = getReview(member.id);
       const isActive = member.id === state.chatMemberId;
       const schedule = review.finalText || member.fixedText || member.availability || "일정 확인 필요";
+      const waitingDays = waitingDaysFor(member.id);
+      const noShowCount = getNoShowCount(member.id);
       return `
         <button class="chat-member-button ${isActive ? "active" : ""}" data-action="select-chat-member" data-id="${member.id}">
           <span class="chat-member-dot ${review.status || "pending"}"></span>
@@ -3493,7 +3596,10 @@
             <strong>${escapeHtml(member.name)}</strong>
             <span>${escapeHtml(schedule)}</span>
           </span>
-          <span class="status-chip ${review.status || "pending"}">${STATUS_LABELS[review.status || "pending"]}</span>
+          <span class="chat-member-flags">
+            ${noShowCount ? `<span class="status-chip cancel">노쇼 ${noShowCount}</span>` : ""}
+            <span class="status-chip ${review.status || "pending"}">${STATUS_LABELS[review.status || "pending"]}${waitingDays === null ? "" : ` ${waitingDays}일`}</span>
+          </span>
         </button>
       `;
     }
@@ -3535,7 +3641,7 @@
               <p class="subtle">${escapeHtml(scheduleSummary(baseText))}</p>
             </div>
             <div class="panel-actions">
-              ${review.customMessage ? `<span class="status-chip adjusted">저장문구</span>` : ""}
+              ${getSavedChatMessage(member.id, MESSAGE_TAB_MODE) ? `<span class="status-chip adjusted">저장문구</span>` : ""}
               <span class="status-chip ${review.status || "pending"}">${STATUS_LABELS[review.status || "pending"]}</span>
             </div>
           </div>
@@ -3934,7 +4040,8 @@
             </div>
           </div>
           <div class="broj-queue-actions">
-            <button class="primary" id="copyBrojAutomationRequest" ${requestRows.length ? "" : "disabled"}>자동등록 요청 복사</button>
+            <button class="primary" id="sendToGymlordCrm" ${requestRows.length ? "" : "disabled"}>GYMLORD CRM에 등록 →</button>
+            <button id="copyBrojAutomationRequest" ${requestRows.length ? "" : "disabled"}>자동등록 요청 복사</button>
             <button id="copyBrojAutomationJson" ${requestRows.length ? "" : "disabled"}>JSON 복사</button>
             <button id="openBrojCrm">브로제이 열기</button>
           </div>
@@ -4116,7 +4223,7 @@
           request: review.request || "",
           finalText: review.finalText || member.fixedText || "",
           note: review.note || "",
-          customMessage: review.customMessage || "",
+          customMessage: hasAnySavedChatMessage(review) ? "있음" : "",
 	          durationOverrideCount,
 	          conflictIgnoreCount
 	        };
@@ -4499,25 +4606,27 @@
         request: "",
         finalText: "",
         note: "",
-        customMessage: ""
+        customMessages: {}
       };
       saveState();
       render();
     }
 
-    function saveCustomMessage(id, value) {
+    function saveCustomMessage(id, value, mode = state.chatMode) {
       const review = getWeekReview();
       if (!review[id]) review[id] = {};
-      review[id].customMessage = String(value || "").trim();
+      if (!review[id].customMessages) review[id].customMessages = {};
+      review[id].customMessages[mode] = String(value || "").trim();
       saveState();
       render();
-      showToast("카톡 문구를 저장했습니다.");
+      const modeLabel = CHAT_MODES.find((item) => item.value === mode)?.label || "";
+      showToast(`${modeLabel ? modeLabel + " " : ""}문구를 저장했습니다.`);
     }
 
-    function resetCustomMessage(id) {
+    function resetCustomMessage(id, mode = state.chatMode) {
       const review = getWeekReview();
       if (!review[id]) review[id] = {};
-      review[id].customMessage = "";
+      if (review[id].customMessages) delete review[id].customMessages[mode];
       saveState();
       render();
       showToast("기본 자동문구로 되돌렸습니다.");
@@ -4677,6 +4786,41 @@
         return;
       }
       copyText(JSON.stringify(brojAutomationPayload(readyRows), null, 2), "브로제이 JSON을 복사했습니다.");
+    }
+
+    // 확정 일정을 GYMLORD CRM으로 바로 보낸다 (복사·붙여넣기 없음).
+    // localStorage는 같은 오리진에서만 공유되므로, 로컬에서 열었거나 오리진이 다르면
+    // 조용히 실패하는 대신 JSON을 복사해 주고 사람이 붙여넣도록 안내한다.
+    function sendToGymlordCrm() {
+      const readyRows = brojAutomationRows(getBrojRowsWithState());
+      if (!readyRows.length) {
+        showToast("등록 가능한 일정이 없습니다.");
+        return;
+      }
+      const payload = brojAutomationPayload(readyRows);
+      const sameOrigin = location.origin === new URL(GYMLORD_CRM_URL).origin;
+      if (!sameOrigin) {
+        copyText(JSON.stringify(payload, null, 2),
+          "여기서는 바로 보낼 수 없어 JSON을 복사했습니다. CRM 가져오기 창에 붙여넣어주세요.");
+        window.open(GYMLORD_CRM_URL, "_blank");
+        return;
+      }
+      try {
+        localStorage.setItem(CRM_HANDOFF_KEY, JSON.stringify({
+          at: Date.now(),
+          weekStart: state.weekStart,
+          weekLabel: weekRangeLabel(),
+          count: readyRows.length,
+          payload
+        }));
+      } catch (err) {
+        copyText(JSON.stringify(payload, null, 2),
+          "전달에 실패해 JSON을 복사했습니다. CRM 가져오기 창에 붙여넣어주세요.");
+        window.open(GYMLORD_CRM_URL, "_blank");
+        return;
+      }
+      window.open(GYMLORD_CRM_URL + "?import=1", "_blank");
+      showToast(`${readyRows.length}건을 CRM으로 보냈습니다. 새 탭에서 확인하세요.`);
     }
 
     function copyBrojRowJson(key) {
@@ -5052,6 +5196,7 @@
     function saveCurrentChatDraft() {
       const member = getChatMember();
       if (!member) return;
+      markContacted(member.id);
       saveCustomMessage(member.id, currentChatDraftText());
     }
 
@@ -5181,15 +5326,23 @@
       if (action === "use-candidate") appendChatCandidate(target.dataset.value || "");
       if (action === "copy-message") {
         const member = state.members.find((item) => item.id === id);
-        if (member) copyText(textareaValue(`message-${id}`, buildMessage(member)), "카톡 문구를 복사했습니다.");
+        if (member) {
+          copyText(textareaValue(`message-${id}`, buildMessage(member)), "카톡 문구를 복사했습니다.");
+          markContacted(id);
+        }
       }
       if (action === "save-message") {
-        saveCustomMessage(id, textareaValue(`message-${id}`, ""));
+        saveCustomMessage(id, textareaValue(`message-${id}`, ""), MESSAGE_TAB_MODE);
       }
       if (action === "reset-message") {
-        resetCustomMessage(id);
+        resetCustomMessage(id, MESSAGE_TAB_MODE);
       }
-      if (action === "copy-chat-draft") copyText(currentChatDraftText(), "카톡 작업 문구를 복사했습니다.");
+      if (action === "copy-chat-draft") {
+        copyText(currentChatDraftText(), "카톡 작업 문구를 복사했습니다.");
+        markContacted(getChatMember()?.id);
+      }
+      if (action === "record-no-show") recordNoShow(id);
+      if (action === "undo-no-show") undoLastNoShow(id);
       if (action === "save-chat-draft") saveCurrentChatDraft();
       if (action === "reset-chat-draft") {
         const member = getChatMember();
@@ -5242,6 +5395,7 @@
       if (target.id === "markFixedConfirmed") markFixedConfirmed();
       if (target.id === "resetWeekResponses") resetWeekResponses();
       if (target.id === "copyBrojRows") copyBrojRows();
+      if (target.id === "sendToGymlordCrm") sendToGymlordCrm();
       if (target.id === "copyBrojAutomationRequest") copyBrojAutomationRequest();
       if (target.id === "copyBrojAutomationJson") copyBrojAutomationJson();
       if (target.id === "copyBrojResultTemplate") copyBrojResultTemplate();
