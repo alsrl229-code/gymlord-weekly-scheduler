@@ -1312,6 +1312,70 @@
       line-height: 1.35;
     }
 
+    .conflict-strip {
+      border: 1px solid #e6b7b1;
+      border-radius: var(--radius);
+      background: #fbeeec;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .conflict-strip.in-history {
+      margin: 0 16px 14px;
+    }
+
+    .conflict-strip-head {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .conflict-strip-head strong {
+      font-size: 13px;
+      color: var(--red);
+    }
+
+    .conflict-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .conflict-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      width: 100%;
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: #fff;
+      border-color: #e6b7b1;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    button.conflict-item:hover {
+      background: #fdf5f4;
+      border-color: var(--red);
+    }
+
+    .conflict-item.static {
+      cursor: default;
+    }
+
+    .conflict-item > span:first-child {
+      font-weight: 700;
+    }
+
+    .conflict-with {
+      color: var(--red);
+    }
+
     .schedule-choice-backdrop {
       position: fixed;
       inset: 0;
@@ -2435,6 +2499,78 @@
       };
     }
 
+    function getWeekConflicts(weekStart = state.weekStart) {
+      const isCurrent = weekStart === state.weekStart;
+      const weekReview = state.reviews?.[weekStart] || {};
+      const members = isCurrent ? getActiveMembers() : getHistoryMembers(weekStart);
+      const rows = [];
+      members.forEach((member) => {
+        const review = weekReview[member.id] || {};
+        const included = normalizeStatus(review.status) === "confirmed" || (isCurrent && state.includePendingBroj);
+        if (!included) return;
+        const sourceText = review.finalText || member.fixedText || "";
+        const overrides = review.durationOverrides || {};
+        const ignores = review.conflictIgnores || {};
+        parseScheduleText(sourceText, weekStart).forEach((slot) => {
+          const startMinutes = timeToMinutes(slot.time);
+          if (startMinutes === null) return;
+          const key = slotOverrideKey(slot.dateISO, slot.time);
+          const overrideDur = Number(overrides[key]);
+          const duration = overrideDur > 0 ? overrideDur : memberDuration(member);
+          const endMinutes = startMinutes + duration;
+          rows.push({
+            memberId: member.id,
+            name: member.name,
+            dateISO: slot.dateISO,
+            day: slot.day,
+            timeRange: displayTimeRange(slot.time, minutesToTime(endMinutes)),
+            startMinutes,
+            endMinutes,
+            conflictIgnored: !!ignores[key],
+            conflictWith: []
+          });
+        });
+      });
+      for (let i = 0; i < rows.length; i += 1) {
+        for (let j = i + 1; j < rows.length; j += 1) {
+          const a = rows[i];
+          const b = rows[j];
+          if (a.dateISO !== b.dateISO || a.conflictIgnored || b.conflictIgnored) continue;
+          if (membersShareGroup(a.memberId, b.memberId)) continue;
+          if (!rangesOverlap(a.startMinutes, a.endMinutes, b.startMinutes, b.endMinutes)) continue;
+          a.conflictWith.push(b);
+          b.conflictWith.push(a);
+        }
+      }
+      return rows
+        .filter((row) => row.conflictWith.length)
+        .sort((a, b) => String(a.dateISO).localeCompare(String(b.dateISO)) || a.startMinutes - b.startMinutes || a.name.localeCompare(b.name));
+    }
+
+    function renderConflictStrip(weekStart, options = {}) {
+      const conflicts = getWeekConflicts(weekStart);
+      if (!conflicts.length) return "";
+      const editable = Boolean(options.editable);
+      return `
+        <div class="conflict-strip ${options.inHistory ? "in-history" : ""}">
+          <div class="conflict-strip-head">
+            <strong>시간 충돌 ${conflicts.length}건</strong>
+            <span class="subtle">같은 시간대에 확정 일정이 겹칩니다.${editable ? " 회원을 눌러 시간을 수정하세요." : ""}</span>
+          </div>
+          <div class="conflict-list">
+            ${conflicts.map((row) => {
+              const withText = row.conflictWith.map((other) => `${escapeHtml(other.name)} ${escapeHtml(other.timeRange)}`).join(", ");
+              const label = `${escapeHtml(row.day)} ${escapeHtml(row.timeRange)} · ${escapeHtml(row.name)}`;
+              const meta = `<span class="conflict-with">↔ ${withText}</span>`;
+              return editable
+                ? `<button class="conflict-item" data-action="open-chat-member" data-id="${row.memberId}"><span>${label}</span>${meta}</button>`
+                : `<div class="conflict-item static"><span>${label}</span>${meta}</div>`;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
     function render() {
       getWeekReview();
       document.getElementById("weekStart").value = state.weekStart;
@@ -3486,6 +3622,7 @@
             <button data-action="confirm-chat-final" class="primary">확정</button>
           </div>
         </div>
+        ${renderConflictStrip(state.weekStart, { editable: true })}
         ${selected ? `
           <div class="chat-work">
             <aside class="chat-sidebar">
@@ -4279,6 +4416,7 @@
 	            <strong>${counts.needs}</strong>
 	          </div>
 	        </div>
+        ${renderConflictStrip(state.historyWeek, { editable: false, inHistory: true })}
         <div class="table-wrap">
           <table>
             <thead>
