@@ -1323,7 +1323,7 @@
     }
 
     .conflict-strip.in-history {
-      margin: 0 16px 14px;
+      margin: 14px 16px 0;
     }
 
     .conflict-strip-head {
@@ -4387,6 +4387,7 @@
       const counts = historyStatusCounts(state.historyWeek);
       const rows = getHistoryRows(state.historyWeek);
       document.getElementById("tab-history").innerHTML = `
+        ${renderConflictStrip(state.historyWeek, { editable: false, inHistory: true })}
         <div class="panel-head">
           <div>
             <h2>주차 이력</h2>
@@ -4416,7 +4417,6 @@
 	            <strong>${counts.needs}</strong>
 	          </div>
 	        </div>
-        ${renderConflictStrip(state.historyWeek, { editable: false, inHistory: true })}
         <div class="table-wrap">
           <table>
             <thead>
