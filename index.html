@@ -1915,6 +1915,7 @@
     let memberSearchComposing = false;
     let supabaseClient = null;
     let cloudSaveTimer = null;
+    let cloudRealtimeChannel = null;
     let pendingScheduleChoice = null;
     const cloudState = {
       configured: false,
@@ -2639,16 +2640,15 @@
       if (!cloudState.session) {
         panel.innerHTML = `
           <div class="sync-main">
-            <strong>클라우드 로그인</strong>
-            <span>${escapeHtml(cloudState.message || "로그인하면 여러 기기에서 같은 데이터를 사용합니다.")}</span>
+            <strong>로그인해야 기기끼리 동기화됩니다</strong>
+            <span>${escapeHtml(cloudState.message && cloudState.status !== "signed-out" ? cloudState.message : "지금은 이 기기에만 저장 중입니다. 폰·데스크톱에서 같은 이메일로 로그인하면 데이터가 공유됩니다.")}</span>
           </div>
           <div class="sync-actions">
             <label>
               이메일
               <input id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com">
             </label>
-            <button id="sendMagicLink">이메일 링크</button>
-            <button id="signInGoogle" class="primary">Google 로그인</button>
+            <button id="sendMagicLink" class="primary">이메일 링크 받기</button>
           </div>
         `;
         return;
@@ -2656,7 +2656,7 @@
 
       panel.innerHTML = `
         <div class="sync-main">
-          <strong>클라우드 동기화</strong>
+          <strong>클라우드 동기화 중</strong>
           <span>${escapeHtml(cloudState.email || "로그인됨")} · ${escapeHtml(cloudState.message || "연결됨")}</span>
         </div>
         <div class="sync-actions">
@@ -2676,7 +2676,10 @@
     function queueCloudSave() {
       if (!cloudState.configured || !cloudState.session || cloudState.applyingRemote) return;
       window.clearTimeout(cloudSaveTimer);
-      cloudSaveTimer = window.setTimeout(() => saveCloudStateNow({ silent: true }), 900);
+      cloudSaveTimer = window.setTimeout(() => {
+        cloudSaveTimer = null;
+        saveCloudStateNow({ silent: true });
+      }, 900);
     }
 
     function safeRedirectUrl() {
@@ -2708,11 +2711,52 @@
       cloudState.session = session || null;
       cloudState.email = session?.user?.email || "";
       if (!session) {
+        unsubscribeCloudRealtime();
         setCloudMessage("로그인 대기 중", "signed-out");
         return;
       }
       setCloudMessage("클라우드 확인 중", "syncing");
       if (options.loadRemote) await loadCloudState({ silent: true });
+      subscribeCloudRealtime();
+    }
+
+    function unsubscribeCloudRealtime() {
+      if (cloudRealtimeChannel && supabaseClient) {
+        supabaseClient.removeChannel(cloudRealtimeChannel);
+      }
+      cloudRealtimeChannel = null;
+    }
+
+    function subscribeCloudRealtime() {
+      if (!supabaseClient || !cloudState.session?.user?.id) return;
+      unsubscribeCloudRealtime();
+      cloudRealtimeChannel = supabaseClient
+        .channel("scheduler-sync")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: SUPABASE_CONFIG.table, filter: `user_id=eq.${cloudState.session.user.id}` },
+          (payload) => {
+            const row = payload.new;
+            if (!row || !row.app_state) return;
+            if (cloudState.applyingRemote || cloudState.busy) return;
+            if (row.updated_at && row.updated_at === cloudState.lastUpdatedAt) return;
+            cloudState.applyingRemote = true;
+            state = normalizeStateObject(row.app_state);
+            maybeAdvanceWeekStart();
+            cloudState.lastUpdatedAt = row.updated_at || "";
+            saveState({ skipCloud: true });
+            cloudState.applyingRemote = false;
+            render();
+            setCloudMessage(`다른 기기 변경 반영 ${formatSyncTime(row.updated_at)}`, "synced");
+          }
+        )
+        .subscribe();
+    }
+
+    function pullCloudOnFocus() {
+      if (document.visibilityState !== "visible") return;
+      if (!supabaseClient || !cloudState.session || cloudState.busy || cloudSaveTimer) return;
+      loadCloudState({ silent: true });
     }
 
     async function cloudRecordQuery() {
@@ -5712,6 +5756,7 @@
 
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState !== "visible") return;
+      pullCloudOnFocus();
       const todayISO = toISODate(new Date());
       if (todayISO === lastWeekAutoCheckDate) return;
       lastWeekAutoCheckDate = todayISO;
