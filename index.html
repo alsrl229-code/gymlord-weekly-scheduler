@@ -1996,7 +1996,7 @@
         brojResultText: "",
         chatMemberId: "m_example_flexible_evening",
         chatMode: "confirm",
-        chatCandidateText: "",
+        chatCandidateText: null,
         chatPasteText: "",
         calendarEvents: [],
         noShowLog: [],
@@ -2074,6 +2074,7 @@
 	            }))
 	        : [];
 	      if (!CHAT_MODES.some((mode) => mode.value === next.chatMode)) next.chatMode = "confirm";
+	      next.chatCandidateText = null;
       next.members.forEach((member) => {
         if (!member.duration || member.duration === 50) member.duration = 80;
         if (member.groupId == null) member.groupId = "";
@@ -3068,10 +3069,16 @@
       return slots.map((slot) => `${slot.day} ${displayTime(slot.time)}`).join("\n");
     }
 
+    function effectiveCandidateText(member) {
+      if (state.chatCandidateText != null) return state.chatCandidateText;
+      if (!member) return "";
+      return getReview(member.id).finalText || member.fixedText || "";
+    }
+
     function generateChatDraft(member) {
       if (!member) return "";
       const review = getReview(member.id);
-      const candidate = (state.chatCandidateText || review.finalText || member.fixedText || "").trim();
+      const candidate = effectiveCandidateText(member).trim();
       const scheduleLines = scheduleLinesForMessage(candidate);
       const availability = member.availability ? `\n가능하신 범위는 ${member.availability}로 알고있어요.` : "";
 
@@ -3189,7 +3196,7 @@
 
     function getCandidateConflictChecks(member) {
       if (!member) return [];
-      const candidateText = (state.chatCandidateText || getReview(member.id).finalText || member.fixedText || "").trim();
+      const candidateText = effectiveCandidateText(member).trim();
       const comparisonRows = getComparisonRows(member.id);
       return parseScheduleText(candidateText).map((slot) => {
         const startMinutes = timeToMinutes(slot.time);
@@ -3386,7 +3393,7 @@
     }
 
     function maybeOpenSameDayChoice(member, mode, text) {
-      const sourceText = (text || state.chatCandidateText || getReview(member.id).finalText || member.fixedText || "").trim();
+      const sourceText = (text || effectiveCandidateText(member)).trim();
       const duplicate = getSameDayDuplicate(sourceText);
       if (!duplicate) return false;
       return openSameDayChoiceModal(member, duplicate, mode, sourceText);
@@ -3444,14 +3451,17 @@
 
     function renderDurationOverrideControls(member) {
       if (!member) return "";
-      const candidateText = (state.chatCandidateText || getReview(member.id).finalText || member.fixedText || "").trim();
+      const candidateText = effectiveCandidateText(member).trim();
       const slots = parseScheduleText(candidateText);
       if (!slots.length) {
         return `
           <div class="mini-panel">
-            <div>
-              <h3>이번주 예외 확보분</h3>
-              <p class="subtle">제안/최종 일정에 시간이 들어가면 이 주차만 수업 시간을 줄이거나 늘릴 수 있습니다.</p>
+            <div class="mini-panel-head">
+              <div>
+                <h3>이번주 예외 확보분</h3>
+                <p class="subtle">제안/최종 일정에 시간이 들어가면 이 주차만 수업 시간을 줄이거나 늘릴 수 있습니다.</p>
+              </div>
+              <button data-action="restore-candidate-default" data-id="${member.id}">기본값 불러오기</button>
             </div>
           </div>
         `;
@@ -3464,6 +3474,7 @@
               <h3>이번주 예외 확보분</h3>
               <p class="subtle">기본 ${base}분 대신 특정 일정만 이번 주에 다르게 계산합니다.</p>
             </div>
+            <button data-action="restore-candidate-default" data-id="${member.id}">기본값 불러오기</button>
           </div>
           <div class="override-grid">
             ${slots.map((slot) => {
@@ -3717,7 +3728,7 @@
                   </label>
                   <label class="field-2">
                     제안/최종 일정
-                    <input id="chatCandidateText" type="text" value="${escapeHtml(state.chatCandidateText || review.finalText || selected.fixedText || "")}" placeholder="예: 월 18:00, 수 10:10, 금 10:10">
+                    <input id="chatCandidateText" type="text" value="${escapeHtml(effectiveCandidateText(selected))}" placeholder="예: 월 18:00, 수 10:10, 금 10:10">
                   </label>
                 </div>
                 <div id="durationOverrideControls">
@@ -5331,7 +5342,7 @@
       const member = state.members.find((item) => item.id === memberId);
       if (!member) return;
       const review = getReview(memberId);
-      const sourceText = (state.chatCandidateText || review.finalText || member.fixedText || "").trim();
+      const sourceText = effectiveCandidateText(member).trim();
       const remaining = parseScheduleText(sourceText).filter((slot) => slotOverrideKey(slot.dateISO, slot.time) !== key);
       state.chatCandidateText = remaining.map((slot) => `${slot.day} ${slot.time}`).join(", ");
       if (review.durationOverrides) delete review.durationOverrides[key];
@@ -5339,6 +5350,16 @@
       saveState();
       render();
       showToast("일정을 목록에서 제거했습니다. 최종 반영을 누르면 저장됩니다.");
+    }
+
+    function restoreCandidateDefault(memberId) {
+      const member = state.members.find((item) => item.id === memberId);
+      if (!member) return;
+      state.chatCandidateText = null;
+      saveState();
+      render();
+      const restored = effectiveCandidateText(member).trim();
+      showToast(restored ? "기본 일정을 다시 불러왔습니다." : "기본 일정이 없습니다.");
     }
 
     function setConflictIgnore(memberId, key, checked) {
@@ -5386,7 +5407,7 @@
       const member = state.members.find((item) => item.id === id);
       if (!member) return;
       state.chatMemberId = id;
-      state.chatCandidateText = getReview(id).finalText || member.fixedText || "";
+      state.chatCandidateText = null;
       state.chatPasteText = "";
       saveState();
       render();
@@ -5403,7 +5424,7 @@
       const member = getChatMember();
       if (!member) return;
       const review = getReview(member.id);
-      const finalText = (state.chatCandidateText || review.finalText || member.fixedText || "").trim();
+      const finalText = effectiveCandidateText(member).trim();
       if (!finalText) {
         showToast("먼저 최종 일정을 입력해주세요.");
         return;
@@ -5422,7 +5443,7 @@
       const member = getChatMember();
       if (!member) return;
       const review = getReview(member.id);
-      const finalText = (state.chatCandidateText || review.finalText || member.fixedText || "").trim();
+      const finalText = effectiveCandidateText(member).trim();
       if (finalText && !options.skipSameDayChoice && maybeOpenSameDayChoice(member, "confirm", finalText)) return;
       if (finalText && !options.skipScheduleChoice && maybeOpenScheduleChoice(member, "confirm")) return;
       if (finalText) review.finalText = finalText;
@@ -5438,7 +5459,7 @@
     function appendChatCandidate(value) {
       if (!value) return;
       const member = getChatMember();
-      const current = (state.chatCandidateText || "").trim();
+      const current = effectiveCandidateText(member).trim();
       const proposedText = current ? (current.includes(value) ? current : `${current}, ${value}`) : value;
       if (member && maybeOpenSameDayChoice(member, "append", proposedText)) return;
       state.chatCandidateText = proposedText;
@@ -5453,7 +5474,7 @@
         return;
       }
       const member = getChatMember();
-      const current = (state.chatCandidateText || "").trim();
+      const current = effectiveCandidateText(member).trim();
       const proposedText = current ? `${current}, ${parsedText}` : parsedText;
       if (member && maybeOpenSameDayChoice(member, "parse", proposedText)) return;
       state.chatCandidateText = parsedText;
@@ -5534,6 +5555,7 @@
       if (action === "confirm-chat-final") confirmChatMember();
       if (action === "reset-duration-override") resetDurationOverride(id, target.dataset.key || "");
       if (action === "remove-candidate-slot") removeCandidateSlot(id, target.dataset.key || "");
+      if (action === "restore-candidate-default") restoreCandidateDefault(id);
       if (action === "copy-broj-value") copyText(target.dataset.value || "", "브로제이 입력값을 복사했습니다.");
       if (action === "copy-broj-json") copyBrojRowJson(target.dataset.key || "");
       if (action === "mark-broj-done") setBrojDone(target.dataset.key || "", true);
