@@ -1,0 +1,17 @@
+{
+  "name": "짐로드 주간 스케줄",
+  "short_name": "짐로드",
+  "description": "회원 주간 일정 확인, 카톡 문구, 브로제이 등록 리스트",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f5f1",
+  "theme_color": "#1e241f",
+  "icons": [
+    { "src": "./icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
